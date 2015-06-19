@@ -1,0 +1,48 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+
+%opening
+\title{}
+\author{}
+
+\begin{document}
+
+$$
+F(x) = \frac12 \|Ax-b\|_2^2 + \lambda \|x\|_1
+$$
+
+ 
+
+$$
+F(x) = \frac12 \|Ax-b\|_2^2 + \frac\lambda2 \|x\|_2^2
+$$
+
+$$
+F(x) = \frac12 \sum_{j=1}^m  \max\{0, 1-y_j A_{j}^T x   \}^2 + \lambda \|x\|_1
+$$
+
+$$
+F(x) = \frac12 \sum_{j=1}^m  \max\{0, 1-y_j A_{j}^T x   \}^2 + \frac\lambda2 \|x\|_2^2
+$$
+
+$$
+F(x) =  \sum_{j=1}^m  \log (1+e^{-y_j A_{j}^T x }) + \lambda \|x\|_1
+$$
+
+$$
+F(x) =  \sum_{j=1}^m  \log (1+e^{-y_j A_{j}^T x }) + \frac\lambda2 \|x\|_2^2
+$$
+
+$$
+F(x) = \frac1m \sum_{j=1}^m  \max\{0, 1-y_j A_{j}^T x   \}+ \frac\lambda2 \|x\|_2^2
+$$
+
+\begin{itemize}
+ \item $A \in {R}^{m \times n}$
+ \item $A_{j} \in R^n$ is a column vector consisting of $j$-th row of matrix $A$
+\end{itemize}
+
+
+
+
+\end{document}
