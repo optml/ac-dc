@@ -478,12 +478,8 @@ double nesterov_generator_to_file(string logFileName, L n, L m, L p,
 
 	ofstream dataInfo;
 	dataInfo.open(logFileName.c_str());
-	dataInfo << local_m << " " << global_m << " ";
-
-	for (int i=0;i<filesCount;i++){
-		dataInfo <<local_n<<" ";
-	}
-	dataInfo << setprecision(32) << optimalValue << endl;
+	dataInfo << local_n << " " << local_m << " " << global_m << " "
+			<< setprecision(32) << optimalValue << endl;
 	dataInfo.close();
 	cout << "Data file done " << endl;
 	for (int file = 0; file < filesCount; file++) {

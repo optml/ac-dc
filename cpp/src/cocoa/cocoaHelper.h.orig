@@ -1,0 +1,135 @@
+/*
+ * cocoaHelper.h
+ *
+ *  Created on: Nov 17, 2014
+ *      Author: taki
+ */
+
+
+#ifndef COCOAHELPER_H_
+#define COCOAHELPER_H_
+
+
+
+template<typename L, typename D>
+void localCDMethod(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
+                std::vector<D> &w, std::vector<D> &deltaW,
+                DistributedSettings & distributedSettings) {
+
+
+
+	for (L i = 0; i < H; i++){
+
+
+	}
+
+	//output: deltaW deltaalpha
+	for (L i = 0; i < instance.n; i++)
+		for (L j = instance.A_csc_col_ptr[i];
+			j < instance.A_csc_col_ptr[i + 1]; j++) {
+			deltaW[instance.A_csc_row_idx[j]] +=
+				instance.A_csc_values[j] * deltaAlpha[i];
+		}
+
+
+
+
+
+
+
+
+}
+
+<<<<<<< local
+
+template<typename L, typename D>
+void localLBFGSMethod(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
+		std::vector<D> &w, std::vector<D> &deltaW,
+		DistributedSettings & distributedSettings) {
+
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+=======
+
+template<typename L, typename D>
+void localLBFGSMethod(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
+                std::vector<D> &w, std::vector<D> &deltaW,
+                DistributedSettings & distributedSettings) {
+
+
+}
+
+
+>>>>>>> other
+template<typename L, typename D>
+D computeObjectiveValue(ProblemData<L, D> & instance,
+<<<<<<< local
+		mpi::communicator & world,  std::vector<D>   & w) {
+
+=======
+                mpi::communicator & world,  std::vector<D> & w) {
+>>>>>>> other
+
+		std::vector<double> residuals(instance.m);
+
+<<<<<<< local
+	for (unsigned int i=0;i < instance.n; i++){
+
+//		localError+= log(1+exp(.....));
+
+	}
+
+
+	// .... do some computation of local error ....
+=======
+	    for (L i = 0; i < instance.m; i++)
+	    		residuals[i] = 0;
+			for (L i = 0; i < instance.n; i++) {
+				for (L j = instance.A_csc_col_ptr[i];
+						j < instance.A_csc_col_ptr[i + 1]; j++) {
+					residuals[instance.A_csc_row_idx[j]] +=
+							-instance.b[instance.A_csc_row_idx[j]]*
+							instance.A_csc_values[j] * instance.x[i];
+			}
+		}
+>>>>>>> other
+
+		D localError = 0;
+        for (unsigned int i=0;i < instance.n; i++){
+
+<<<<<<< local
+	finalError= 1/(0.0+ instance.total_n) * finalError   + instance.lambda*0.5*cblas_l2_norm(w.size(), &w[0],1);
+
+
+	return finalError;
+=======
+              localError+= log(1 + exp((residuals)[i]));
+
+        }
+
+
+        D finalError = 0;
+        vall_reduce(world, &localError, &finalError, 1);
+
+        finalError= 1/(0.0+ instance.total_n) * finalError   + instance.lambda*0.5*cblas_l2_norm(w.size(), &w[0],1);
+
+
+        return finalError;
+>>>>>>> other
+
+}
+
+#endif /* COCOAHELPER_H_ */

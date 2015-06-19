@@ -49,7 +49,7 @@ D computeDualityGapSparse(L m, L n, ProblemData<int, double>& part,
 		dual += 0.5 * (x[i] * x[i]) - x[i] * b[i];
 	}
 	D norm = cblas_l2_norm(m, &w[0], 1);
-	lonezeroloss = correct / (part.n + 0.0);
+	lonezeroloss = correct/(part.n+0.0);
 	primal = 1 / (0.0 + part.n) * primal + lambda * 0.5 * norm * norm;
 	dual = 1 / (0.0 + part.n) * dual + lambda * 0.5 * norm * norm;
 	return primal + dual;
@@ -125,7 +125,7 @@ void runPCDMExperiment(L m, L n, std::vector<D>& A, std::vector<D>& b,
 	cout << "Duality Gap: " << gap << "   " << primal << "   " << dual << endl;
 
 	logFile << setprecision(16) << "0," << tau << "," << m << "," << n << ","
-			<< lambda << "," << primal << "," << dual << "," << 0 <<",0,0"<< endl;
+			<< lambda << "," << primal << "," << dual << "," << 0 << endl;
 
 	std::vector<D> deltaAlpha(tau);
 	std::vector<int> S(tau);
@@ -304,11 +304,7 @@ template<typename L, typename D>
 void runCDNExperiment(L m, L n, std::vector<D>& A, std::vector<D>& b,
 		D & lambda, int tau, ofstream& logFile, int type, D maxTime,
 		std::vector<D>& Hessian) {
-	int threadsUsed = 1;
-#pragma omp parallel
-	{
-		threadsUsed = omp_get_num_threads();
-	}
+
 	bool hessianPrecomputed = (Hessian.size() > 0);
 
 	std::vector < D > x(n, 0);
@@ -327,8 +323,8 @@ void runCDNExperiment(L m, L n, std::vector<D>& A, std::vector<D>& b,
 	cout << "Duality Gap: " << gap << "   " << primal << "   " << dual << endl;
 
 	logFile << setprecision(16) << type << "," << tau << "," << m << "," << n
-			<< "," << lambda << "," << primal << "," << dual << "," << 0 << ","
-			<< threadsUsed << endl;
+			<< "," << lambda << "," << primal << "," << dual << "," << 0
+			<< endl;
 
 	std::vector<D> Qdata(tau * tau, 0);
 //	std::vector<D> Qb(tau);
@@ -475,12 +471,10 @@ void runCDNExperiment(L m, L n, std::vector<D>& A, std::vector<D>& b,
 
 			gap = computeDualityGap(m, n, A, b, x, w, lambda, primal, dual);
 			cout << "Duality Gap: " << it << " , " << gap << "   " << primal
-					<< "   " << dual << "  " << elapsedTime  << ","
-					<< threadsUsed<< endl;
+					<< "   " << dual << "  " << elapsedTime << endl;
 			logFile << setprecision(16) << type << "," << tau << "," << m << ","
 					<< n << "," << lambda << "," << primal << "," << dual << ","
-					<< elapsedTime  << ","
-					<< threadsUsed<< endl;
+					<< elapsedTime << endl;
 		}
 
 		if (elapsedTime > maxTime || gap < 0.000000000000001) {
@@ -493,18 +487,10 @@ void runCDNExperiment(L m, L n, std::vector<D>& A, std::vector<D>& b,
 
 }
 
-#include "../parallel/parallel_essentials_posix.h"
-
 template<typename L, typename D>
 void runCDNExperimentSparse(L m, L n, ProblemData<int, double>& part,
 		std::vector<D>& b, D & lambda, int tau, ofstream& logFile, int type,
-		D maxTime, std::vector<D>& Hessian, bool OPM = true) {
-
-	int threadsUsed = 1;
-#pragma omp parallel
-	{
-		threadsUsed = omp_get_num_threads();
-	}
+		D maxTime, std::vector<D>& Hessian) {
 	bool hessianPrecomputed = (Hessian.size() > 0);
 	std::vector < D > x(n, 0);
 	for (int i = 0; i < x.size(); i++) {
@@ -522,8 +508,8 @@ void runCDNExperimentSparse(L m, L n, ProblemData<int, double>& part,
 	cout << "Duality Gap: " << gap << "   " << primal << "   " << dual << endl;
 
 	logFile << setprecision(16) << type << "," << tau << "," << m << "," << n
-			<< "," << lambda << "," << primal << "," << dual << "," << 0 << ","
-			<< threadsUsed << ",0,0,0,0" << endl;
+			<< "," << lambda << "," << primal << "," << dual << "," << 0
+			<< endl;
 
 	std::vector<D> Qdata(tau * tau, 0);
 	std::vector<D> bS(tau);
@@ -538,9 +524,6 @@ void runCDNExperimentSparse(L m, L n, ProblemData<int, double>& part,
 
 	int info;
 	double elapsedTime = 0;
-	double elapsedTime1 = 0;
-	double elapsedTime2 = 0;
-	double elapsedTime3 = 0;
 	double start;
 
 	long long it = 0;
@@ -611,7 +594,6 @@ void runCDNExperimentSparse(L m, L n, ProblemData<int, double>& part,
 
 		start = gettime_();
 		// bS = -A_{S} * w    .....		y := alpha*A*x + beta*y,
-//#pragma omp parallel for
 		for (int i = 0; i < tau; i++) {
 			bS[i] = 0;
 			for (int j = part.A_csr_row_ptr[S[i]];
@@ -619,27 +601,24 @@ void runCDNExperimentSparse(L m, L n, ProblemData<int, double>& part,
 				bS[i] -= part.A_csr_values[j] * w[part.A_csr_col_idx[j]];
 			}
 		}
-		elapsedTime += gettime_() - start;
-		start = gettime_();
 
 		//  1/lambda n   h^T Ms H
 //		cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, tau, tau, m,
 //				1 / (lambda * n + 0.0), &AS[0], m, &AS[0], m, 0.0, &Qdata[0],
 //				tau);
 
-//#pragma omp parallel for
 		for (int i = 0; i < tau; i++) {
 			//bS = bS +  x_i    - y_i
 			bS[i] += -x[S[i]] + b[S[i]];
-			Qdata[i + i * tau] += 1;			//+  h_i
+			Qdata[i + i * tau] += 1;  //+  h_i
 		}
-//		elapsedTime1= gettime_() -start;start = gettime_();
+
 		if (type == 1) {
 
 			int s;
-
 			gsl_linalg_LU_decomp(&mm.matrix, p, &s);
 			gsl_linalg_LU_solve(&mm.matrix, p, &bb.vector, T);
+
 			for (int i = 0; i < tau; i++) {
 				x[S[i]] = x[S[i]] + T->data[i];
 			}
@@ -653,7 +632,6 @@ void runCDNExperimentSparse(L m, L n, ProblemData<int, double>& part,
 			}
 
 		} else {
-
 			info = LAPACKE_dgels(LAPACK_COL_MAJOR, 'N', tau, tau, 1, &Qdata[0],
 					tau, &bS[0], tau);
 
@@ -664,33 +642,24 @@ void runCDNExperimentSparse(L m, L n, ProblemData<int, double>& part,
 				printf("the least squares solution could not be computed.\n");
 				exit(1);
 			}
-			elapsedTime2 += gettime_() - start;
-			start = gettime_();
 
-//#pragma omp parallel for
 			for (int i = 0; i < tau; i++) {
 				x[S[i]] = x[S[i]] + bS[i];
 			}
-			elapsedTime1 = gettime_() - start;
-			start = gettime_();
-//#pragma omp parallel for
+
 			for (int i = 0; i < tau; i++) {
 				for (int j = part.A_csr_row_ptr[S[i]];
 						j < part.A_csr_row_ptr[S[i] + 1]; j++) {
-
-//parallel::atomic_add(
 					w[part.A_csr_col_idx[j]] += scaling * part.A_csr_values[j]
-							* bS[i]; //);
+							* bS[i];
 				}
 			}
-			elapsedTime3 = gettime_() - start;
-			start = gettime_();
 
 //			cblas_dgemv(CblasColMajor, CblasNoTrans, m, tau, scaling, &AS[0], m,
 //					&bS[0], 1, 1, &w[0], 1);
 
 		}
-
+		elapsedTime += (gettime_() - start);
 		if ((it + tau) % n < tau) {
 
 			gap = computeDualityGapSparse(m, n, part, b, x, w, lambda, primal,
@@ -699,14 +668,10 @@ void runCDNExperimentSparse(L m, L n, ProblemData<int, double>& part,
 					<< "   " << dual << "  " << elapsedTime << endl;
 			logFile << setprecision(16) << type << "," << tau << "," << m << ","
 					<< n << "," << lambda << "," << primal << "," << dual << ","
-					<< elapsedTime + elapsedTime1 + elapsedTime2 + elapsedTime3
-					<< "," << threadsUsed << "," << elapsedTime << ","
-					<< elapsedTime1 << "," << elapsedTime2 << ","
-					<< elapsedTime3 << endl;
+					<< elapsedTime << endl;
 		}
 
-		if (elapsedTime + elapsedTime1 + elapsedTime2 + elapsedTime3 > maxTime
-				|| gap < 0.000000000000001) {
+		if (elapsedTime > maxTime || gap < 0.000000000000001) {
 			break;
 		}
 	}

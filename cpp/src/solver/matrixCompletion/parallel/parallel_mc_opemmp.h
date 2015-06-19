@@ -24,8 +24,6 @@ using namespace std;
 
 #include "../../../utils/my_cblas_wrapper.h"
 
-#include "../../../parallel/parallel_essentials_posix.h"
-
 #define CHUNKSIZE 128
 
 template<typename L, typename D>
@@ -182,9 +180,9 @@ problem_mc_data<L, D> &ProblemData_inst, problem_mc_data<L, D> &test_data,
 
 	}
 
-	while (totalElapsedTime < settings.total_execution_time) {
+//	while (totalElapsedTime < settings.total_execution_time) {
 
-//	while (total_full_iterations < settings.iters_communicate_count) {
+	while (total_full_iterations < settings.iters_communicate_count) {
 
 		double start_time = gettime_();
 		//		/*
@@ -221,9 +219,8 @@ problem_mc_data<L, D> &ProblemData_inst, problem_mc_data<L, D> &test_data,
 						for (L j = residuals_csr_RowPtr[u_cor];
 								j < residuals_csr_RowPtr[u_cor + 1]; j++) {
 							L v_cor = residuals_csr_ColIdx[j];
-							parallel::atomic_add(
-									residuals_val[residuals_csr_Pointers[j]],
-									delta * h_R[v_cor * rank + i_cor]);
+							residuals_val[residuals_csr_Pointers[j]] += delta
+									* h_R[v_cor * rank + i_cor];
 						}
 						chOfLipConst = h_L[u_cor * rank + i_cor]
 								* h_L[u_cor * rank + i_cor]
@@ -231,10 +228,8 @@ problem_mc_data<L, D> &ProblemData_inst, problem_mc_data<L, D> &test_data,
 						chOfLipConst = 2 * chOfLipConst;
 						for (L i = residuals_csr_RowPtr[u_cor];
 								i < residuals_csr_RowPtr[u_cor + 1]; i++) {
-							parallel::atomic_add(
-									h_R_Lip_const_object[residuals_csr_ColIdx[i]
-											* rank + i_cor], chOfLipConst);
-
+							h_R_Lip_const_object[residuals_csr_ColIdx[i] * rank
+									+ i_cor] += chOfLipConst;
 						}
 					}
 				}
@@ -266,17 +261,14 @@ problem_mc_data<L, D> &ProblemData_inst, problem_mc_data<L, D> &test_data,
 						chOfLipConst = 2 * chOfLipConst;
 						for (L i = residuals_csc_ColPtr[v_cor];
 								i < residuals_csc_ColPtr[v_cor + 1]; i++) {
-							parallel::atomic_add(
-									h_L_Lip_const[residuals_csc_RowIdx[i] * rank
-											+ i_cor], chOfLipConst);
+							h_L_Lip_const[residuals_csc_RowIdx[i] * rank + i_cor] +=
+									chOfLipConst;
 						}
 						for (L j = residuals_csc_ColPtr[v_cor];
 								j < residuals_csc_ColPtr[v_cor + 1]; j++) {
 							L u_cor = residuals_csc_RowIdx[j];
-
-							parallel::atomic_add(
-									residuals_val[residuals_csc_Pointers[j]],
-									delta * h_L[u_cor * rank + i_cor]);
+							residuals_val[residuals_csc_Pointers[j]] += delta
+									* h_L[u_cor * rank + i_cor];
 						}
 					}
 				}
@@ -338,7 +330,7 @@ problem_mc_data<L, D> &ProblemData_inst, problem_mc_data<L, D> &test_data,
 			}
 		}
 
-		D objval = sumOfLANDU;
+		D objval = sumOfLANDU ;
 		trainmsre = sqrt(trainmsre / (points + 0.0));
 
 		D normOfL = cblas_l2_norm(ProblemData_inst.L_mat.size(),

@@ -14,6 +14,8 @@
 
 #include "../utils/distributed_instances_loader.h"
 
+#include <cmath>
+
 int main(int argc, char * argv[]) {
 
 	std::string file;
@@ -98,6 +100,12 @@ int main(int argc, char * argv[]) {
 	}
 	cout << "Stage 2" << endl;
 
+	for (int kk = 0; kk < 6; kk++)
+	{
+
+	K = pow(2, kk+8);
+
+
 	double sigma = 0;
 
 	for (int k = 0; k < K; k++) {
@@ -122,8 +130,8 @@ int main(int argc, char * argv[]) {
 		if (k == K - 1) {
 			nK += part.n - nK * K;
 		}
-		cout << "Partiiton " <<  k <<"  "<<fi << "  "<< nK <<endl;
-		for (int PM = 0; PM < 20; PM++) {
+		//cout << "Partiiton " <<  k <<"  "<<fi << "  "<< nK <<endl;
+		for (int PM = 0; PM < 6; PM++) {
 
 			for (int j = 0; j < m; j++) {
 				y[j] = 0;
@@ -151,7 +159,7 @@ int main(int argc, char * argv[]) {
 			}
 
 			maxEig = cblas_l2_norm(n, &x[0], 1);
-			cout << maxEig << endl;
+			//cout << maxEig << endl;
 			cblas_vector_scale(n, &x[0], 1 / maxEig);
 
 		}
@@ -160,12 +168,13 @@ int main(int argc, char * argv[]) {
 		sigma += sigmaK * nK;
 	}
 
-	cout << "sigma is " << sigma << "  after norma "
-			<< sigma / (part.n * part.n + 0.0) << endl;
+	cout << "sigma is " << sigma << "n is "<< part.n << "  after norm "
+			<< 1.0* sigma / part.n / part.n << endl;
 	;
 
 	cout << "Max eigenvalue estimated " << endl;
 
+	}
 	logFile.close();
 
 //	histogramLogFile.close();

@@ -106,62 +106,6 @@ public:
 		this->clearResidualBuffers();
 	}
 
-	virtual std::vector<double> computeLocalPredictions() {
-
-		std::vector < std::vector<D> > allPredictiors;
-		allPredictiors.push_back(globalResiduals);
-
-		cout << globalResiduals.size() << "XXXXXXXXXCV" << endl;
-
-		if (world.rank() == 0) {
-			for (int i = 1; i < world.size(); i++) {
-				std::vector < D > rec(globalResiduals.size());
-				world.recv(i, i, &rec[0], globalResiduals.size());
-				allPredictiors.push_back(rec);
-			}
-
-		} else {
-			vsend(world, 0, world.rank(), globalResiduals);
-
-		}
-
-		std::vector<double> localPredictions;
-
-		if (world.rank() == 0) {
-
-			for (int file = 0; file < allPredictiors.size(); file++) {
-
-				L good = 0;
-				L totalSamples = 0;
-
-
-				for (L j = 0; j < globalInstance.A_test_csr_row_ptr.size() - 1;
-						j++) {
-					totalSamples++;
-					D error = 0;
-					for (L i = globalInstance.A_test_csr_row_ptr[j];
-							i < globalInstance.A_test_csr_row_ptr[j + 1]; i++) {
-						error +=
-								globalInstance.A_test_csr_values[i]
-										* allPredictiors[file][globalInstance.A_test_csr_col_idx[i]];
-					}
-					if (globalInstance.test_b[j] * error > 0) {
-						good++;
-					}
-
-				}
-				D myPrediction = good / (totalSamples + 0.0);
-				localPredictions.push_back(myPrediction);
-			}
-
-			return localPredictions;
-		} else {
-		}
-
-		return localPredictions;
-
-	}
-
 	virtual void executeBulkOfIterations() {
 		L innerIterations = distributedSettings->iterationsPerThread
 				* TOTAL_THREADS;
@@ -418,7 +362,6 @@ public:
 		}
 	}
 
-}
-;
+};
 
 #endif /* CLUSTERENGINEEXECUTOR_H_ */

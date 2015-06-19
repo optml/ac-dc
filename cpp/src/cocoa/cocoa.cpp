@@ -19,12 +19,12 @@
 #include "class/QuadraticLossCD.h"
 #include "class/SquareHingeLossCD.h"
 
-#ifdef MATLAB
-
-#include "class/QuadraticLossLbfgs.h"
-#include "class/LogisticLossMatlab.h"
-
-#endif
+//#ifdef MATLAB
+//
+//#include "class/QuadraticLossLbfgs.h"
+//#include "class/LogisticLossMatlab.h"
+//
+//#endif
 #include  <sstream>
 int main(int argc, char *argv[]) {
 	MPI_Init(&argc, &argv);
@@ -115,16 +115,16 @@ int main(int argc, char *argv[]) {
 		lf = new QuadraticLossCD<unsigned int, double>();
 		break;
 
-#ifdef MATLAB
-
-		case 4:
-		lf = new QuadraticLossLbfgs<unsigned int, double>();
-		break;
-		case 5:
-		lf = new LogisticLossMatlab<unsigned int, double>();
-		break;
-
-#endif
+//#ifdef MATLAB
+//
+//		case 4:
+//		lf = new QuadraticLossLbfgs<unsigned int, double>();
+//		break;
+//		case 5:
+//		lf = new LogisticLossMatlab<unsigned int, double>();
+//		break;
+//
+//#endif
 
 	default:
 		break;

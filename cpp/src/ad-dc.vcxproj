@@ -1,0 +1,222 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{1A7D2812-C050-48C8-8C32-C82AA297578C}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="cocoa\cocoa.cpp" />
+    <ClCompile Include="experiments\distributedNesterovGenerator.cpp" />
+    <ClCompile Include="experiments\distributedSVM.cpp" />
+    <ClCompile Include="experiments\large_scale_experiment.cpp" />
+    <ClCompile Include="experiments\large_scale_sdca_experiment.cpp" />
+    <ClCompile Include="experiments\lasso_console_solver.cpp" />
+    <ClCompile Include="experiments\matrixcompletition\matrixCompletitionExperiment.cpp" />
+    <ClCompile Include="experiments\minibatch_sdca_experiment.cpp" />
+    <ClCompile Include="experiments\svm_max_eigenvalue.cpp" />
+    <ClCompile Include="frontends\matrixcompletion\mc_consoleSolver.cpp" />
+    <ClCompile Include="frontends\matrixcompletion\mc_extended_inpainting.cpp" />
+    <ClCompile Include="frontends\matrixcompletion\mc_inpainting.cpp" />
+    <ClCompile Include="frontends\matrixcompletion\mc_netflix.cpp" />
+    <ClCompile Include="frontends\solvers\ClusterSolver.cpp" />
+    <ClCompile Include="frontends\solvers\MultiCoreSolver.cpp" />
+    <ClCompile Include="frontends\ttd\TTDProblemGenerator.cpp" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\cusparsgreedyl2l1\GridSize.cpp" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\cusparsgreedyl2l1\test.cpp" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\Eddie.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\mulitply.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM2.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDML1RegLog.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDMSparseRegression.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NesterovProblem.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NesterovProblemOpenMP.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NesterovProblemOpenMPEddie.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NesterovProblemRegularized.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NesterovProblemSP.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NesterovProblemSpeed.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NoNesterovProblem.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\oldcuda.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\order.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\sorting.c" />
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\TEST.c" />
+    <ClCompile Include="oldsourcefiles\distributed_dual_svm_solver.cpp" />
+    <ClCompile Include="oldsourcefiles\distributed_huge_experiment.cpp" />
+    <ClCompile Include="oldsourcefiles\distributed_huge_strategies.cpp" />
+    <ClCompile Include="oldsourcefiles\distributed_problem_generator.cpp" />
+    <ClCompile Include="oldsourcefiles\distributed_svm_cross_feature_builder.cpp" />
+    <ClCompile Include="oldsourcefiles\distributed_svm_parser.cpp" />
+    <ClCompile Include="oldsourcefiles\distributed_svm_solver.cpp" />
+    <ClCompile Include="oldsourcefiles\distributed_testmpi.cpp" />
+    <ClCompile Include="test\distributed_unit_test.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="class\Context.h" />
+    <ClInclude Include="cocoa\cocoaHelper.h" />
+    <ClInclude Include="helpers\c_libs_headers.h" />
+    <ClInclude Include="helpers\matrix_conversions.h" />
+    <ClInclude Include="helpers\option_console_parser.h" />
+    <ClInclude Include="helpers\option_distributed_console_parser.h" />
+    <ClInclude Include="helpers\utils.h" />
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\headers.h" />
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\helpers.h" />
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\kernels.h" />
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\parallel\greedyL2L1Solver.h" />
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\parallel\randomL2L1Solver.h" />
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\serial\greedyL2L1Solver.h" />
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\serial\randomL2L1Solver.h" />
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\structures.h" />
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\ttd\ttd.h" />
+    <ClInclude Include="oldsourcefiles\cuda_to_sort\cusparsgreedyl2l1\helpers.h" />
+    <ClInclude Include="oldsourcefiles\cuda_to_sort\cusparsgreedyl2l1\kernels.h" />
+    <ClInclude Include="oldsourcefiles\cuda_to_sort\cusparsgreedyl2l1\ttd.h" />
+    <ClInclude Include="oldsourcefiles\loss\distributed_losses.h" />
+    <ClInclude Include="oldsourcefiles\loss\losses.h" />
+    <ClInclude Include="oldsourcefiles\loss\loss_abstract.h" />
+    <ClInclude Include="oldsourcefiles\loss\loss_hinge_dual.h" />
+    <ClInclude Include="oldsourcefiles\loss\loss_logistic.h" />
+    <ClInclude Include="oldsourcefiles\loss\loss_square.h" />
+    <ClInclude Include="oldsourcefiles\loss\loss_square_hinge.h" />
+    <ClInclude Include="oldsourcefiles\solveSVMProblem.h" />
+    <ClInclude Include="parallel\parallel_essentials.h" />
+    <ClInclude Include="parallel\parallel_essentials_posix.h" />
+    <ClInclude Include="problem_generator\distributed\generator.h" />
+    <ClInclude Include="problem_generator\distributed\generator_blocked.h" />
+    <ClInclude Include="problem_generator\distributed\generator_fat.h" />
+    <ClInclude Include="problem_generator\distributed\generator_kdiagonal.h" />
+    <ClInclude Include="problem_generator\distributed\generator_nesterov.h" />
+    <ClInclude Include="problem_generator\distributed\generator_nesterov_multipart.h" />
+    <ClInclude Include="problem_generator\distributed\generator_nesterov_to_file.h" />
+    <ClInclude Include="problem_generator\distributed\generator_random.h" />
+    <ClInclude Include="problem_generator\distributed\generator_taki.h" />
+    <ClInclude Include="problem_generator\generator_nesterov.h" />
+    <ClInclude Include="problem_generator\matrixcompletition\inpainting_problem_generator.h" />
+    <ClInclude Include="problem_generator\matrixcompletition\mc_problem_generation.h" />
+    <ClInclude Include="problem_generator\ttd\TTDGenerator.h" />
+    <ClInclude Include="solver\AbstractEngineExecutor.h" />
+    <ClInclude Include="solver\ClusterApproxEngineExecutor.h" />
+    <ClInclude Include="solver\ClusterEngineExecutor.h" />
+    <ClInclude Include="solver\distributed\data_distributor.h" />
+    <ClInclude Include="solver\distributed\data_distributor_hypergraph.h" />
+    <ClInclude Include="solver\distributed\distributed_asynchronous.h" />
+    <ClInclude Include="solver\distributed\distributed_asynchronous_topologies.h" />
+    <ClInclude Include="solver\distributed\distributed_asynchronous_topology_abstract.h" />
+    <ClInclude Include="solver\distributed\distributed_asynchronous_topology_torus1.h" />
+    <ClInclude Include="solver\distributed\distributed_common.h" />
+    <ClInclude Include="solver\distributed\distributed_essentials.h" />
+    <ClInclude Include="solver\distributed\distributed_include.h" />
+    <ClInclude Include="solver\distributed\distributed_solver.h" />
+    <ClInclude Include="solver\distributed\distributed_structures.h" />
+    <ClInclude Include="solver\distributed\distributed_svm.h" />
+    <ClInclude Include="solver\distributed\distributed_synchronous.h" />
+    <ClInclude Include="solver\distributed\distributed_synchronous_schema.h" />
+    <ClInclude Include="solver\lossfunctions\AbstractLoss.h" />
+    <ClInclude Include="solver\lossfunctions\approxClusterLossFunctions.h" />
+    <ClInclude Include="solver\lossfunctions\clusterLossFunctions.h" />
+    <ClInclude Include="solver\lossfunctions\logisticloss\LogisticLoss.h" />
+    <ClInclude Include="solver\lossfunctions\logisticloss\MulticoreL2SquareRegLogisticLoss.h" />
+    <ClInclude Include="solver\lossfunctions\logisticloss\MulticoreLogisticLoss.h" />
+    <ClInclude Include="solver\lossfunctions\multicoreLossFunctions.h" />
+    <ClInclude Include="solver\lossfunctions\squareloss\ApproxClusterL1ReqSquareLoss.h" />
+    <ClInclude Include="solver\lossfunctions\squareloss\ClusterL1ReqSquareLoss.h" />
+    <ClInclude Include="solver\lossfunctions\squareloss\ClusterL2SquareReqSquareLoss.h" />
+    <ClInclude Include="solver\lossfunctions\squareloss\ClusterSquareLoss.h" />
+    <ClInclude Include="solver\lossfunctions\squareloss\MulticoreL1RegSquareLoss.h" />
+    <ClInclude Include="solver\lossfunctions\squareloss\MulticoreL2SquareRegSquareLoss.h" />
+    <ClInclude Include="solver\lossfunctions\squareloss\MulticoreSquareLoss.h" />
+    <ClInclude Include="solver\lossfunctions\squareloss\SquareLoss.h" />
+    <ClInclude Include="solver\lossfunctions\svmdualloss\ApproxClusterSVMDualLoss.h" />
+    <ClInclude Include="solver\lossfunctions\svmdualloss\ClusterSVMDualLoss.h" />
+    <ClInclude Include="solver\lossfunctions\svmdualloss\MulticoreSVMDualLoss.h" />
+    <ClInclude Include="solver\lossfunctions\svmdualloss\SVMDualLoss.h" />
+    <ClInclude Include="solver\matrixcompletion\parallel\parallel_mc_opemmp.h" />
+    <ClInclude Include="solver\matrixcompletion\parallel\parallel_mc_opemmp_extended.h" />
+    <ClInclude Include="solver\matrixcompletion\parallel\solveMCProblemCUDA.h" />
+    <ClInclude Include="solver\matrixcompletion\serial\solveMCProblem.h" />
+    <ClInclude Include="solver\matrixcompletion\serial\solveMCProblemByAdditiveLayer.h" />
+    <ClInclude Include="solver\MulticoreEngineExecutor.h" />
+    <ClInclude Include="solver\settingsAndStatistics.h" />
+    <ClInclude Include="solver\Solver.h" />
+    <ClInclude Include="solver\structures.h" />
+    <ClInclude Include="solver\treshhold_functions.h" />
+    <ClInclude Include="svm\classifier_testing.h" />
+    <ClInclude Include="svm\parseinputs.h" />
+    <ClInclude Include="svm\svm_parser.h" />
+    <ClInclude Include="utils\csv_writter.h" />
+    <ClInclude Include="utils\data_loader.h" />
+    <ClInclude Include="utils\distributed_instances_loader.h" />
+    <ClInclude Include="utils\file_reader.h" />
+    <ClInclude Include="utils\largeScaleExperiment.h" />
+    <ClInclude Include="utils\my_cblas_wrapper.h" />
+    <ClInclude Include="utils\randomNumbersUtil.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

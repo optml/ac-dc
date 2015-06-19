@@ -35,8 +35,7 @@ public:
 	virtual D getObjectiveValue() {
 		return 0;
 	}
-	virtual std::vector<double> computeLocalPredictions() {
-	}
+
 };
 
 #endif /* ABSTRACTENGINEEXECUTOR_H_ */

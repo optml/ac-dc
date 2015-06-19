@@ -45,13 +45,9 @@ int runConsolveSolver(int argc, char *argv[]) {
 		L local_n;
 		L local_m;
 		L global_m;
+		dataInfo >> local_n;
 		dataInfo >> local_m;
 		dataInfo >> global_m;
-
-		for (int i = 0; i <= world.rank(); i++) {
-			dataInfo >> local_n;
-		}
-
 		cout << "rank " << world.rank() << " " << local_n << " " << local_m
 				<< endl;
 		dataInfo.close();
@@ -120,6 +116,7 @@ int runConsolveSolver(int argc, char *argv[]) {
 			localNNZPerRow[globalInstance.A_csc_row_idx[i]]++;
 		}
 
+
 		vall_reduce(world, &localNNZPerRow[0], &reducedNNZPerRow[0],
 				reducedNNZPerRow.size());
 		for (int i = 0; i < globalInstance.m; i++) {
@@ -184,6 +181,8 @@ int runConsolveSolver(int argc, char *argv[]) {
 
 	}
 
+
+
 	vall_reduce(world, &localInstance.n, &localInstance.total_n, 1);
 
 	L s = 1;
@@ -227,14 +226,14 @@ int runConsolveSolver(int argc, char *argv[]) {
 	distributedSettings.logToFile = true;
 
 	if (distributedSettings.APPROX) {
-		ClusterApproxEngineExecutor<L, D> executor(world, localInstance,
-				globalInstance, &(distributedSettings));
+		ClusterApproxEngineExecutor<L,D> executor(world,
+				localInstance, globalInstance, &(distributedSettings));
 		executor.initializeAll();
 		Solver<L, D> solver(executor);
 		solver.runSolver();
 	} else {
-		ClusterEngineExecutor<L, D> executor(world, localInstance,
-				globalInstance, &(distributedSettings));
+		ClusterEngineExecutor<L, D> executor(world,
+				localInstance, globalInstance, &(distributedSettings));
 
 		executor.initializeAll();
 
@@ -250,6 +249,6 @@ int runConsolveSolver(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
 
-	runConsolveSolver<int, double>(argc, argv);
+	runConsolveSolver<int,float>(argc,argv);
 
 }

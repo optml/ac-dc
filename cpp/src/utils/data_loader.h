@@ -57,7 +57,6 @@ int loadDataFromCSVFile(int m, int n, const char* filename,
 				*(bufferPointer) = c;
 				bufferPointer++;
 			}
-
 		} while (c != '\n');
 	}
 	free(stringBuffer);
@@ -65,52 +64,6 @@ int loadDataFromCSVFile(int m, int n, const char* filename,
 
 	return 1;
 }
-
-template<  typename D>
-int loadDataFromCSVFile(int m, int n, std::string filename,
-		std::vector<D> & data) {
-	data.resize(n * m);
-	FILE* file = fopen(filename.c_str(), "r");
-	if (file == 0) {
-		cout << "File not found: "<< filename<<endl;
-		return 0;
-	}
-	int nnz = 0;
-	char* stringBuffer = (char*) malloc(65536);
-	for (int i = 0; i < m; i++) {
-		char c;
-		char* bufferPointer = stringBuffer;
-		do {
-			c = fgetc(file);
-			if ((c == ' ') || (c == '\n')) {
-				//Feature found
-				*(bufferPointer) = 0;
-				float value;
-				sscanf(stringBuffer, "%f", &value);
-				data[nnz] = value;
-				nnz++;
-				bufferPointer = stringBuffer;
-			} else if (c == ',') {
-				//Position found
-				*(bufferPointer) = 0;
-				float value;
-				sscanf(stringBuffer, "%f", &value);
-				data[nnz] = value;
-				nnz++;
-				bufferPointer = stringBuffer;
-			} else {
-				*(bufferPointer) = c;
-				bufferPointer++;
-			}
-
-		} while (c != '\n');
-	}
-	free(stringBuffer);
-	fclose(file);
-
-	return 1;
-}
-
 
 template<typename L, typename D>
 int load_matrix_in_coo_format(const char* filename,

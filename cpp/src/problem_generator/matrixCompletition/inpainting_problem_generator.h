@@ -9,11 +9,10 @@
 #define INPAINTING_PROBLEM_GENERATOR_H_
 
 #include "mc_problem_generation.h"
-//#include "../solver/structures.h"
+#include "../solver/structures.h"
 
 template<typename T, typename I>
-void generate_random_mc_data_from_image(problem_mc_data<I, T> &ProblemData_instance,std::vector<T> & imageInRowFormat,
-		std::string filename, std::string  filename_sample
+void generate_random_mc_data_from_image(problem_mc_data<I, T> &ProblemData_instance,std::vector<T> & imageInRowFormat, const char* filename, const char* filename_sample
 		, T sparsity ) {
 	// Create random sample with given sparsity
 	I m = ProblemData_instance.m;
@@ -22,14 +21,14 @@ void generate_random_mc_data_from_image(problem_mc_data<I, T> &ProblemData_insta
 	generate_random_matrix_completion_problem(m, n, sparsity, ProblemData_instance.A_coo_values,
 			ProblemData_instance.A_coo_row_idx, ProblemData_instance.A_coo_col_idx);
 
-	cout << "START READING DATA FROM FILE  "<<filename<<"\n";
+	cout << "START READING DATA FROM FILE\n";
 	loadDataFromCSVFile(m, n, filename, imageInRowFormat);
 
 	ProblemData_instance.A_coo_operator.resize(ProblemData_instance.A_coo_values.size());
 	cout << "DATA LOADED TOTAL LENGTH " << ProblemData_instance.A_coo_values.size() << "\n";
 	for (int i = 0; i < ProblemData_instance.A_coo_values.size(); i++) {
 
-		int tmp =0;// (float) 3 * rand() / RAND_MAX;
+		int tmp = (float) 3 * rand() / RAND_MAX;
 		if (tmp == 3)
 			tmp--;
 
@@ -54,7 +53,7 @@ void generate_random_mc_data_from_image(problem_mc_data<I, T> &ProblemData_insta
 		initialSampledData[ProblemData_instance.A_coo_row_idx[i] * n + ProblemData_instance.A_coo_col_idx[i]]
 				= ProblemData_instance.A_coo_values[i];
 	}
-//	saveDataToCSVFile(m, n, filename_sample, initialSampledData);
+	saveDataToCSVFile(m, n, filename_sample, initialSampledData);
 }
 
 #endif /* INPAINTING_PROBLEM_GENERATOR_H_ */

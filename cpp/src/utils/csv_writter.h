@@ -28,18 +28,6 @@ void saveDataToCSVFile(int m, int n, const char* filename, std::vector<T> imageI
 	fclose(file);
 }
 
-template<typename T>
-void saveDataToCSVFile(int m, int n, std::string filename, std::vector<T> imageInRowFormat) {
-	FILE* file = fopen(filename.c_str(), "w");
-	for (int row = 0; row < m; row++) {
-		for (int col = 0; col < (n - 1); col++) {
-			fprintf(file, "%1.16f,", imageInRowFormat[row * n + col]);
-		}
-		fprintf(file, "%1.16f\n", imageInRowFormat[row * n + (n - 1)]);
-	}
-	fclose(file);
-}
-
 template<typename T, typename I>
 void save_matrix_in_csc_format(const char* filename, const char* filenamecol, std::vector<T> A_csc_values, std::vector<
 		I> A_csc_row_idx, std::vector<I> A_csc_col_ptr) {

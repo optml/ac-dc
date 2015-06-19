@@ -11,7 +11,7 @@ template<typename L, typename D>
 void runPCDMExperimentSparseANDTEST(L m, L n, ProblemData<int, double>& part,
 		std::vector<D>& b, D & lambda, int tau, ofstream& logFile,
 		std::vector<D> & Li, D& sigma, D maxTime,
-		ProblemData<int, double>& partTest, int sampling, int K) {
+		ProblemData<int, double>& partTest, int sampling) {
 
 	cout << "Solver starts " << m << " x " << n << endl;
 
@@ -54,41 +54,25 @@ void runPCDMExperimentSparseANDTEST(L m, L n, ProblemData<int, double>& part,
 	double start;
 
 	long long it = 0;
-
-	int tt = tau / K;
-	int s = part.n/K;
-
-	std::vector<int> PS(K);
-	for (int k=0;k<K;k++){
-		PS[k]=s;
-	}
-	PS[K-1]+=part.n-K*s;
-
-	for (int k=0;k<K;k++){
-
-		cout << PS[k]<<endl;
-	}
-
 	for (;;) {
 		it = it + tau;
 
-		for (int k = 0; k < K; k++) {
-			for (int i = 0; i < tt; i++) {
-				bool done = true;
-				do {
-					done = true;
-					S[i + k * tt] = s*k + gsl_rng_uniform_int(gsl_rng_r, PS[k]);
-					for (int j = k * tt; j < i + k * tt; j++) {
+		for (int i = 0; i < tau; i++) {
+			bool done = true;
+			do {
+				done = true;
+				S[i] = gsl_rng_uniform_int(gsl_rng_r, n);
+				for (int j = 0; j < i; j++) {
 
-						if (S[i + k * tt] == S[j + k * tt]) {
-							done = false;
-							break;
-						}
+					if (S[i] == S[j]) {
+						done = false;
+						break;
 					}
+				}
 
-				} while (!done);
-			}
+			} while (!done);
 		}
+
 		start = gettime_();
 
 //#pragma omp parallel for
@@ -151,8 +135,7 @@ int main(int argc, char * argv[]) {
 	int RDN = 0;
 	int sampling = 1;
 	char c;
-	int K = 1;
-	while ((c = getopt(argc, argv, "A:R:T:S:K:")) != -1) {
+	while ((c = getopt(argc, argv, "A:R:T:S:")) != -1) {
 		switch (c) {
 		case 'A':
 			file = optarg;
@@ -166,14 +149,11 @@ int main(int argc, char * argv[]) {
 		case 'S':
 			sampling = atoi(optarg);
 			break;
-		case 'K':
-			K = atoi(optarg);
-			break;
 		}
 	}
 
 	stringstream ss("");
-	ss << file << "_"<<K<<"_mSDCA_log";
+	ss << file << "_mSDCA_log";
 
 	ofstream logFile;
 	logFile.open(ss.str().c_str());
@@ -301,23 +281,13 @@ int main(int argc, char * argv[]) {
 		MAXTAU = 1024 * 8;
 	}
 //	MAXTAU = 2;
-
-	int tauMin = K * 2;
-
-	for (int tau = tauMin; tau <= MAXTAU; tau = tau * 2) {
+	for (int tau = 1; tau <= MAXTAU; tau = tau * 2) {
 
 		double sigma = 1 + (tau - 1) * (maxEig - 1) / (n - 1.0);
-		if (K > 1) {
-			double tt = tau / K;
-
-			sigma = (tt) / (tt - 1)
-					* (1 + (tt - 1) * (maxEig - 1) / (n / (K + 0.0) - 1.0));
-			cout << "sigma   " << sigma << endl;
-		}
 
 		randomNumberUtil::init_random_seeds(rs);
 		runPCDMExperimentSparseANDTEST(m, n, part, part.b, lambda, tau, logFile,
-				Li, sigma, maxTime, partTest, sampling, K);
+				Li, sigma, maxTime, partTest, sampling);
 
 	}
 

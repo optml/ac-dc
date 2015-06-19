@@ -19,7 +19,7 @@ using namespace std;
 #include <vector>
 #include "../../structures.h"
 #include "../../../helpers/matrix_conversions.h"
-//#include "../../../helpers/time_functions.h"
+#include "../../../helpers/time_functions.h"
 #include <omp.h>
 
 template<typename L, typename D>

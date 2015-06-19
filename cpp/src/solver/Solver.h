@@ -27,14 +27,15 @@ public:
 		D objVal;
 		OptimizationStatistics statistics;
 
+
 		if (settings->showInitialObjectiveValue) {
 			objVal = executor.getObjectiveValue();
 			if (settings->verbose) {
 				std::cout << executor.getResultLogHeaders() << std::endl;
 				std::string logRow = executor.getResultLogRow(statistics);
-				std::cout << logRow << std::endl;
-				if (settings->logToFile) {
-					(*settings->logFile) << logRow << std::endl;
+				std::cout <<logRow  << std::endl;
+				if (settings->logToFile){
+					(*settings->logFile)<<logRow  << std::endl;
 				}
 			}
 		}
@@ -50,40 +51,21 @@ public:
 			if (settings->recomputeResidualAfterEachBulkIteration) {
 				executor.recomputeResiduals();
 			}
-			std::string logRow;
+
 			if (settings->showIntermediateObjectiveValue) {
 				objVal = executor.getObjectiveValue();
 				if (settings->verbose) {
-					  logRow = executor.getResultLogRow(statistics);
-					std::cout << logRow << std::endl;
-					if (settings->logToFile) {
-						(*settings->logFile) << logRow << std::endl;
+					std::string logRow = executor.getResultLogRow(statistics);
+					std::cout <<logRow  << std::endl;
+					if (settings->logToFile){
+						(*settings->logFile)<<logRow  << std::endl;
 					}
-
-
-
-
-
 				}
-
-				if (settings->logToFile) {
-					(*settings->logFile) <<"AC:"<< logRow ;
-				}
-
-				std::vector<double> localPredictions =
-						executor.computeLocalPredictions();
-				if (localPredictions.size() > 1) {
-					for (int j = 0; j < localPredictions.size(); j++) {
-						cout << "LOCAL_Prediction" << j << " "
-								<< localPredictions[j] << endl;
-						(*settings->logFile) <<","<<localPredictions[j];
-
-					}
-					(*settings->logFile) <<   std::endl;
-				}
-
 			}
 		}
+
+
+
 
 		if (settings->showLastObjectiveValue) {
 			objVal = executor.getObjectiveValue();

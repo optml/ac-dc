@@ -1,0 +1,447 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="cocoa\cocoa.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="experiments\distributedNesterovGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="experiments\distributedSVM.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="experiments\large_scale_experiment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="experiments\large_scale_sdca_experiment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="experiments\lasso_console_solver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="experiments\minibatch_sdca_experiment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="experiments\svm_max_eigenvalue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="experiments\matrixcompletition\matrixCompletitionExperiment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="frontends\matrixcompletion\mc_consoleSolver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="frontends\matrixcompletion\mc_extended_inpainting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="frontends\matrixcompletion\mc_inpainting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="frontends\matrixcompletion\mc_netflix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="frontends\solvers\ClusterSolver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="frontends\solvers\MultiCoreSolver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="frontends\ttd\TTDProblemGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\distributed_dual_svm_solver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\distributed_huge_experiment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\distributed_huge_strategies.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\distributed_problem_generator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\distributed_svm_cross_feature_builder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\distributed_svm_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\distributed_svm_solver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\distributed_testmpi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\Eddie.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\mulitply.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDML1RegLog.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDMSparseRegression.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NesterovProblem.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NesterovProblemOpenMP.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NesterovProblemOpenMPEddie.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NesterovProblemRegularized.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NesterovProblemSP.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NesterovProblemSpeed.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\NRCDM_NoNesterovProblem.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\oldcuda.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\order.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\sorting.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\TEST.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\cusparsgreedyl2l1\GridSize.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oldsourcefiles\cuda_to_sort\cusparsgreedyl2l1\test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\distributed_unit_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="class\Context.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cocoa\cocoaHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="helpers\c_libs_headers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="helpers\matrix_conversions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="helpers\option_console_parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="helpers\option_distributed_console_parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="helpers\utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\solveSVMProblem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\headers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\helpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\kernels.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\structures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\parallel\greedyL2L1Solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\parallel\randomL2L1Solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\serial\greedyL2L1Solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\solver\serial\randomL2L1Solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\cuda_hso\hso\ttd\ttd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\cuda_to_sort\cusparsgreedyl2l1\helpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\cuda_to_sort\cusparsgreedyl2l1\kernels.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\cuda_to_sort\cusparsgreedyl2l1\ttd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\loss\distributed_losses.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\loss\losses.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\loss\loss_abstract.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\loss\loss_hinge_dual.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\loss\loss_logistic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\loss\loss_square.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oldsourcefiles\loss\loss_square_hinge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="parallel\parallel_essentials.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="parallel\parallel_essentials_posix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="problem_generator\generator_nesterov.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="problem_generator\distributed\generator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="problem_generator\distributed\generator_blocked.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="problem_generator\distributed\generator_fat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="problem_generator\distributed\generator_kdiagonal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="problem_generator\distributed\generator_nesterov.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="problem_generator\distributed\generator_nesterov_multipart.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="problem_generator\distributed\generator_nesterov_to_file.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="problem_generator\distributed\generator_random.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="problem_generator\distributed\generator_taki.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="problem_generator\matrixcompletition\inpainting_problem_generator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="problem_generator\matrixcompletition\mc_problem_generation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="problem_generator\ttd\TTDGenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\AbstractEngineExecutor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\ClusterApproxEngineExecutor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\ClusterEngineExecutor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\MulticoreEngineExecutor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\settingsAndStatistics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\Solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\structures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\treshhold_functions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\data_distributor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\data_distributor_hypergraph.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\distributed_asynchronous.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\distributed_asynchronous_topologies.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\distributed_asynchronous_topology_abstract.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\distributed_asynchronous_topology_torus1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\distributed_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\distributed_essentials.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\distributed_include.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\distributed_solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\distributed_structures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\distributed_svm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\distributed_synchronous.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\distributed\distributed_synchronous_schema.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\AbstractLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\approxClusterLossFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\clusterLossFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\multicoreLossFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\logisticloss\LogisticLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\logisticloss\MulticoreL2SquareRegLogisticLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\logisticloss\MulticoreLogisticLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\squareloss\ApproxClusterL1ReqSquareLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\squareloss\ClusterL1ReqSquareLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\squareloss\ClusterL2SquareReqSquareLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\squareloss\ClusterSquareLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\squareloss\MulticoreL1RegSquareLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\squareloss\MulticoreL2SquareRegSquareLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\squareloss\MulticoreSquareLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\squareloss\SquareLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\svmdualloss\ApproxClusterSVMDualLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\svmdualloss\ClusterSVMDualLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\svmdualloss\MulticoreSVMDualLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\lossfunctions\svmdualloss\SVMDualLoss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\matrixcompletion\parallel\parallel_mc_opemmp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\matrixcompletion\parallel\parallel_mc_opemmp_extended.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\matrixcompletion\parallel\solveMCProblemCUDA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\matrixcompletion\serial\solveMCProblem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver\matrixcompletion\serial\solveMCProblemByAdditiveLayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="svm\classifier_testing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="svm\parseinputs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="svm\svm_parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\csv_writter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\data_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\distributed_instances_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\file_reader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\largeScaleExperiment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\my_cblas_wrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\randomNumbersUtil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
