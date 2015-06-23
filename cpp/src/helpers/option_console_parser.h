@@ -88,7 +88,8 @@ void setParameter(Context &context, char c ) {
 		break;
 	case 'I':
 		context.settings.innerIterations = atoll(optarg);
-
+	case 'M':
+		context.settings.LocalMethods = atoll(optarg);
 		break;
 	case 'i':
 		context.settings.showIntermediateObjectiveValue = atoi(optarg);

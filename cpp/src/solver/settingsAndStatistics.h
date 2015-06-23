@@ -12,6 +12,7 @@ class OptimizationSettings {
 public:
 
 	int lossFunction;
+	int LocalMethods;
 	bool showInitialObjectiveValue;
 	bool showIntermediateObjectiveValue;
 	bool showLastObjectiveValue;

@@ -40,9 +40,11 @@ int parseDistributedOptions(Context& context, DistributedSettings &settings,
 	 * r - result file
 	 */
 	int residualShif;
-	while ((c = getopt(argc, argv, "x:y:z:r:e:A:b:l:t:c:f:g:i:I:T:S:E:C:a:B:F:p:"))
+	while ((c = getopt(argc, argv, "x:y:z:r:e:A:b:l:t:c:f:g:i:I:T:S:E:C:a:B:F:p:M:"))
 			!= -1) {
 		switch (c) {
+		case 'M':
+			context.settings.LocalMethods = atoll(optarg);
 
 		case 'F':
 			context.dataANSIInput=atoi(optarg);

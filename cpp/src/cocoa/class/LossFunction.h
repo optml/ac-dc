@@ -26,13 +26,25 @@ public:
 
 		}
 
-	virtual void solveLocalProblem(ProblemData<L, D> &instance,
+	virtual void SDCA(ProblemData<L, D> &instance,
 			std::vector<D> &deltaAlpha, std::vector<D> &w, std::vector<D> &deltaW,
 			DistributedSettings & distributedSettings){
 
 	}
 
+	virtual void fast_SDCA(ProblemData<L, D> &instance,
+			std::vector<D> &deltaAlpha, std::vector<D> &w, std::vector<D> &deltaW,
+			std::vector<D> &zk, std::vector<D> &uk,
+			std::vector<D> &yk, std::vector<D> &deltayk, std::vector<D> &Ayk, std::vector<D> &deltaAyk,
+			D &theta, DistributedSettings & distributedSettings){
 
+	}
+
+	virtual void fulldescent(ProblemData<L, D> &instance,
+			std::vector<D> &deltaAlpha, std::vector<D> &w, std::vector<D> &deltaW, D &dualobj,
+			DistributedSettings & distributedSettings){
+
+	}
 
 };
 

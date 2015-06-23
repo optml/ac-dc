@@ -45,6 +45,7 @@ public:
 	std::vector<D> test_b;
 
 	std::vector<D> Li;
+	std::vector<D> vi; // ESO stepsize
 
 	std::string experimentName;
 

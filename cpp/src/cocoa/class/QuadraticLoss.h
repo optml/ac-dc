@@ -36,7 +36,7 @@ public:
 					dotProduct += (w[instance.A_csr_col_idx[i]])
 							* instance.A_csr_values[i];
 				}
-				D tmp = 0.5 * (instance.b[idx] - dotProduct) * ( instance.b[idx] - dotProduct);
+				D tmp = 0.5 * (instance.b[idx] - instance.b[idx] * dotProduct) * ( instance.b[idx] - instance.b[idx]* dotProduct);
 
 				localQuadLoss += tmp;
 
@@ -46,7 +46,9 @@ public:
 			vall_reduce(world, &localQuadLoss, &finalPrimalError, 1);
 
 			finalDualError = 0;
+			//cout<<localError<<endl;
 			vall_reduce(world, &localError, &finalDualError, 1);
+			//cout<<finalDualError<<endl;
 
 			D tmp2 = cblas_l2_norm(w.size(), &w[0], 1);
 			finalDualError = 1 / (0.0 + instance.total_n) * finalDualError
