@@ -45,7 +45,7 @@ int parseDistributedOptions(Context& context, DistributedSettings &settings,
 		switch (c) {
 		case 'M':
 			context.settings.LocalMethods = atoll(optarg);
-
+			break;
 		case 'F':
 			context.dataANSIInput=atoi(optarg);
 			break;

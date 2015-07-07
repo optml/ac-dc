@@ -18,7 +18,7 @@ public:
 
 	}
 
-	virtual D computeObjectiveValue(ProblemData<L, D> & instance,
+	virtual void computeObjectiveValue(ProblemData<L, D> & instance,
 					mpi::communicator & world, std::vector<D> & w, double &finalDualError,
 					double &finalPrimalError){
 

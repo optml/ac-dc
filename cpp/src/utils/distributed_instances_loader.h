@@ -97,14 +97,14 @@ int loadDistributedSparseSVMRowData(string inputFile, int file, int totalFiles,
 	part.m = nfeatures;
 	part.n = nsamples;
 
-	cout << "resize " << nsamples + 1 << endl;
+	cout << "resize nsamples+1 " << nsamples + 1 << endl;
 	part.A_csr_row_ptr.resize(nsamples + 1);
 	part.A_csr_col_idx.resize(nonzero_elements_of_input_data);
-	cout << "resize " << nonzero_elements_of_input_data << endl;
+	cout << "resize nnz " << nonzero_elements_of_input_data << endl;
 	part.A_csr_values.resize(nonzero_elements_of_input_data);
-	cout << "resize " << nonzero_elements_of_input_data << endl;
+	cout << "resize nnz " << nonzero_elements_of_input_data << endl;
 	part.b.resize(nsamples);
-	cout << "resize " << nsamples << endl;
+	cout << "resize nsamples " << nsamples << endl;
 	L nnzPossition = 0;
 	L processedSamples = -1;
 
@@ -139,7 +139,8 @@ int loadDistributedSparseSVMRowData(string inputFile, int file, int totalFiles,
 						}
 
 						processedSamples++;
-						part.b[processedSamples] = ddval;
+						part.b[processedSamples] = ddval; // used for a1a data
+						//part.b[processedSamples] = (-1.5 + ddval) * 2.0; // used for covtype data
 						part.A_csr_row_ptr[processedSamples] = nnzPossition;
 
 						pos++;
@@ -186,7 +187,6 @@ int loadDistributedSparseSVMRowData(string inputFile, int file, int totalFiles,
 
 	processedSamples++;
 	part.A_csr_row_ptr[processedSamples] = nnzPossition;
-
 	free(stringBuffer);
 	fclose(filePtr);
 	return 1;

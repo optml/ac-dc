@@ -133,7 +133,6 @@ int main(int argc, char *argv[]) {
 
 	lf->init(instance);
 
-	double elapsedTime = 0;
 
 	std::stringstream ss;
 	ss << ctx.matrixAFile << "_" << instance.lambda << "_"
@@ -156,158 +155,39 @@ int main(int argc, char *argv[]) {
 			/ distributedSettings.iters_bulkIterations_count;
 
 	cout << "BULK "<<distributedSettings.iters_bulkIterations_count<<" "<< distributedSettings.iters_communicate_count<<endl;
-	double start = 0;
-	double finish = 0;
 
 
-	double theta = 4.0 * distributedSettings.iterationsPerThread / instance.total_n;
-	std::vector<double> zk(instance.n);
-	std::vector<double> uk(instance.n);
-	std::vector<double> Ayk(instance.m);
-	std::vector<double> yk(instance.n);
-	std::vector<double> deltayk(instance.n);
-	std::vector<double> deltaAyk(instance.m);
-	cblas_set_to_zero(uk);
-	cblas_set_to_zero(yk);
-	cblas_set_to_zero(Ayk);
-	std::vector<double> AykBuffer(instance.m);
-	double dualobj = 0;
+//	cout<< instance.A_csr_row_ptr[instance.A_csr_row_ptr.size()-1] <<endl;
 
-
-	for (unsigned int i = 0; i < instance.n; i++)
-		zk[i] = instance.x[i];
 	int localsolver = distributedSettings.LocalMethods;
 
 	switch (localsolver) {
 	case 0:
-		for (unsigned int t = 0; t < distributedSettings.iters_communicate_count; t++) {
 
-			start = gettime_();
-
-			for (int jj = 0; jj < distributedSettings.iters_bulkIterations_count; jj++) {
-				cblas_set_to_zero(deltaW);
-				cblas_set_to_zero(deltaAlpha);
-
-				lf->SDCA(instance, deltaAlpha, w, deltaW, distributedSettings);
-				vall_reduce(world, deltaW, wBuffer);
-				cblas_sum_of_vectors(w, wBuffer, gamma);
-				cblas_sum_of_vectors(instance.x, deltaAlpha, gamma);
-			}
-			double primalError;
-			double dualError;
-
-			//computeObjectiveValueHingeLoss(instance, world, w,dualError,primalError);
-			//computeObjectiveValueQuadLoss(instance, world, w,dualError,primalError);
-			//computeObjectiveValueSquaredHingeLoss(instance, world, w,dualError,primalError);
-			finish = gettime_();
-			elapsedTime += finish - start;
-
-			lf->computeObjectiveValue(instance, world, w, dualError, primalError);
-
-			if (ctx.settings.verbose) {
-				cout << "Iteration " << t << " elapsed time " << elapsedTime
-						<< "  error " << primalError << "    " << dualError
-						<< "    " << primalError + dualError << endl;
-
-				logFile << t << "," << elapsedTime << "," << primalError << ","
-						<< dualError << "," << primalError + dualError << endl;
-
-			}
-		}
+		lf->subproblem_solver_SDCA(instance, deltaAlpha, w, wBuffer, deltaW,
+									distributedSettings, world, gamma, ctx, logFile);
 		break;
 	case 1:
 
-
-		for (unsigned int t = 0; t < distributedSettings.iters_communicate_count; t++) {
-			start = gettime_();
-
-			for (int jj = 0; jj < distributedSettings.iters_bulkIterations_count; jj++) {
-				cblas_set_to_zero(deltaW);
-				cblas_set_to_zero(deltaAlpha);
-				cblas_set_to_zero(deltayk);
-				cblas_set_to_zero(deltaAyk);
-
-				lf->fast_SDCA(instance, deltaAlpha, w, deltaW, zk, uk, yk, deltayk, Ayk, deltaAyk, theta, distributedSettings);
-				//for (unsigned int i = 0; i < instance.n; i++){
-				//cout <<i<<"  "<< theta << "    "<<uk[i] << "    " <<zk[i] <<endl;
-				//instance.x[i] = theta * theta * uk[i] + zk[i]; }
-				double thetasq = theta * theta;
-				theta = 0.5 * sqrt(thetasq * thetasq + 4 * thetasq) - 0.5 * thetasq;
-
-				vall_reduce(world, deltaW, wBuffer);
-				cblas_sum_of_vectors(w, wBuffer, gamma);
-				//cblas_sum_of_vectors(instance.x, deltaAlpha, gamma);
-				vall_reduce(world, deltaAyk, AykBuffer);
-				cblas_sum_of_vectors(Ayk, AykBuffer, gamma);
-				//cblas_sum_of_vectors(yk, deltayk, gamma);
-			}
-
-			double primalError;
-			double dualError;
-
-			finish = gettime_();
-			elapsedTime += finish - start;
-
-			lf->computeObjectiveValue(instance, world, w, dualError, primalError);
-
-			if (ctx.settings.verbose) {
-				cout << "Iteration " << t << " elapsed time " << elapsedTime
-						<< "  error " << primalError << "    " << dualError
-						<< "    " << primalError + dualError << endl;
-
-				logFile << t << "," << elapsedTime << "," << primalError << ","
-						<< dualError << "," << primalError + dualError << endl;
-
-			}
-		}
+		lf->subproblem_solver_accelerated_SDCA(instance, deltaAlpha, w, wBuffer, deltaW,
+									distributedSettings, world, gamma, ctx, logFile);
 		break;
 	case 2:
-		for (unsigned int t = 0; t < distributedSettings.iters_communicate_count; t++) {
-			start = gettime_();
 
-			for (int jj = 0; jj <  distributedSettings.iters_bulkIterations_count; jj++) {
-
-				cblas_set_to_zero(deltaW);
-				cblas_set_to_zero(deltaAlpha);
-
-				lf->fulldescent(instance, deltaAlpha, w, deltaW, dualobj, distributedSettings);
-				//matrixvector(instance.A_csr_values, instance.A_csr_col_idx,instance.A_csr_row_ptr, instance.x, instance.m, deltaW);
-				cblas_set_to_zero(w);
-
-				vall_reduce(world, deltaW, wBuffer);
-				cblas_sum_of_vectors(w, wBuffer, gamma);
-				//cout << deltaW[0]<<"   "<<w[0]<<"   "<<wBuffer[0]<<endl;
-
-				//cblas_sum_of_vectors(instance.x, deltaAlpha, gamma);
-
-			}
-
-			double primalError;
-			double dualError;
-
-			finish = gettime_();
-			elapsedTime += finish - start;
-
-			lf->computeObjectiveValue(instance, world, w, dualError, primalError);
-
-			if (ctx.settings.verbose) {
-				cout << "Iteration " << t << " elapsed time " << elapsedTime
-						<< "  error " << primalError << "    " << dualError
-						<< "    " << primalError + dualError << endl;
-
-				logFile << t << "," << elapsedTime << "," << primalError << ","
-						<< dualError << "," << primalError + dualError << endl;
-
-			}
-		}
+		lf->subproblem_solver_steepestdescent(instance, deltaAlpha, w, wBuffer, deltaW,
+									distributedSettings, world, gamma, ctx, logFile);
 		break;
 
+	case 3:
+		lf->subproblem_solver_LBFGS(instance, deltaAlpha, w, wBuffer, deltaW,
+									distributedSettings, world, gamma, ctx, logFile);
+
+		break;
 	default:
 		break;
 	}
 
 	//-------------------------------------------------------
-
 
 	if (ctx.settings.verbose) {
 		logFile.close();
