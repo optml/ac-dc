@@ -14,6 +14,8 @@ using namespace std;
 template<typename L, typename D>
 void matrixvector(std::vector<D> &A, std::vector<L> &Asub, std::vector<L> &xA, std::vector<D> &b, L &m, std::vector<D> &result) {
 
+	cblas_set_to_zero(result);
+
 	for (L i = 0; i < m; i++){
 
 		D temp = 0;

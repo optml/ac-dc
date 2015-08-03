@@ -15,9 +15,9 @@ template<typename L, typename D>
 class LogisticLoss : public LossFunction<L, D> {
 public:
 
-	LogisticLoss(){
+	LogisticLoss(){}
 
-	}
+	virtual ~LogisticLoss() {}
 
 	virtual void computeObjectiveValue(ProblemData<L, D> & instance,
 				mpi::communicator & world, std::vector<D> & w, double &finalDualError,
@@ -25,9 +25,7 @@ public:
 		D localError = 0;
 			for (unsigned int i = 0; i < instance.n; i++) {
 				D tmp = 0;
-				//if(instance.b[i]*instance.x[i]<=0)cout<<instance.b[i]<<"  "<<instance.x[i]<<endl;
 				if (instance.b[i] == -1.0){
-				  //cout<<instance.x[i]<<endl;
 					if (instance.x[i] < 0){
 						tmp += -instance.x[i] * log(-instance.x[i]) ;
 					}
@@ -37,7 +35,6 @@ public:
 
 				}
 				if (instance.b[i] == 1.0){
-				  //cout<<instance.x[i]<<"   ";
 				        if (instance.x[i] > 0){
 						tmp += instance.x[i] * log(instance.x[i]) ;
 					}
@@ -45,10 +42,11 @@ public:
 						tmp += (1 - instance.x[i]) * log(1 - instance.x[i]);
 					}
 				}
-				//if (tmp>0) cout<<tmp<<endl;
+//				D part = 1.0 * instance.x[i] / instance.b[i];
+//				if (part == 0)  cout<<part<<"   "<<i<<endl;
+//				tmp = part * log(part) + (1.0 - part) * log(1.0 - part);
 				localError += tmp;
 			}
-			//cout<<localError<<" ";
 
 			D localLogisticLoss = 0;
 			for (unsigned int idx = 0; idx < instance.n; idx++) {
@@ -63,7 +61,6 @@ public:
 				localLogisticLoss += log(1 + exp(tmp));
 
 			}
-			//cout<<localLogisticLoss<<"  ";
 			finalPrimalError = 0;
 			vall_reduce(world, &localLogisticLoss, &finalPrimalError, 1);
 
@@ -75,7 +72,6 @@ public:
 					+ 0.5 * instance.lambda * tmp2 * tmp2;
 			finalPrimalError =  1.0 / instance.total_n * finalPrimalError
 				+ 0.5 * instance.lambda * tmp2 * tmp2;
-			//for(unsigned int i=0; i<w.size();i++){cout<<w[i]<<"  ";}
 		}
 
 };

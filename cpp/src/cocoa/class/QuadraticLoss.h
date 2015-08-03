@@ -12,7 +12,7 @@
 #include "LossFunction.h"
 
 template<typename L, typename D>
- class QuadraticLoss: public LossFunction<L, D>  {
+class QuadraticLoss: public LossFunction<L, D>  {
 public:
 	QuadraticLoss(){
 
@@ -21,42 +21,68 @@ public:
 	virtual ~QuadraticLoss() {}
 
 	virtual void computeObjectiveValue(ProblemData<L, D> & instance,
-					mpi::communicator & world, std::vector<D> & w, double &finalDualError,
-					double &finalPrimalError){
+			mpi::communicator & world, std::vector<D> & w, double &finalDualError,
+			double &finalPrimalError){
 
 		D localError = 0.0;
-			for (unsigned int i = 0; i < instance.n; i++) {
-				D tmp = instance.x[i] * instance.x[i] *0.5 - instance.b[i] * instance.x[i];
-				localError += tmp;
+		for (unsigned int i = 0; i < instance.n; i++) {
+			D tmp = instance.x[i] * instance.x[i] *0.5 - instance.b[i] * instance.x[i];
+			localError += tmp;
+		}
+
+		D localQuadLoss = 0.0;
+		for (unsigned int idx = 0; idx < instance.n; idx++) {
+			D dotProduct = 0.0;
+			for (L i = instance.A_csr_row_ptr[idx];
+					i < instance.A_csr_row_ptr[idx + 1]; i++) {
+				dotProduct += (w[instance.A_csr_col_idx[i]])
+													* instance.A_csr_values[i];
 			}
+			D tmp = 0.5 * (1.0 * instance.b[idx] -  dotProduct * instance.b[idx]) * (1.0 * instance.b[idx] - dotProduct * instance.b[idx]);
 
-			D localQuadLoss = 0.0;
-			for (unsigned int idx = 0; idx < instance.n; idx++) {
-				D dotProduct = 0.0;
-				for (L i = instance.A_csr_row_ptr[idx];
-						i < instance.A_csr_row_ptr[idx + 1]; i++) {
-					dotProduct += (w[instance.A_csr_col_idx[i]])
-							* instance.A_csr_values[i];
-				}
-				D tmp = 0.5 * (1.0 * instance.b[idx] -  dotProduct * instance.b[idx]) * (1.0 * instance.b[idx] - dotProduct * instance.b[idx]);
+			localQuadLoss += tmp;
 
-				localQuadLoss += tmp;
+		}
 
-			}
+		finalPrimalError = 0;
+		vall_reduce(world, &localQuadLoss, &finalPrimalError, 1);
 
-			finalPrimalError = 0;
-			vall_reduce(world, &localQuadLoss, &finalPrimalError, 1);
+		finalDualError = 0;
+		//cout<<localError<<endl;
+		vall_reduce(world, &localError, &finalDualError, 1);
+		//cout<<finalDualError<<endl;
 
-			finalDualError = 0;
-			//cout<<localError<<endl;
-			vall_reduce(world, &localError, &finalDualError, 1);
-			//cout<<finalDualError<<endl;
-
-			D tmp2 = cblas_l2_norm(w.size(), &w[0], 1);
-			finalDualError = 1.0 / (0.0 + instance.total_n) * finalDualError
-					+ 0.5 * instance.lambda * tmp2 * tmp2;
+		D tmp2 = cblas_l2_norm(w.size(), &w[0], 1);
+		finalDualError = 1.0 / (0.0 + instance.total_n) * finalDualError
+				+ 0.5 * instance.lambda * tmp2 * tmp2;
 		finalPrimalError =  1.0 / (0.0 + instance.total_n) * finalPrimalError
 				+ 0.5 * instance.lambda * tmp2 * tmp2;
+	}
+
+
+	virtual void compute_subproproblem_obj(ProblemData<L, D> &instance,
+			std::vector<D> &potent, std::vector<D> &w, D &potent_obj){
+		D obj_temp1 = 0.0;
+		D obj_temp2 = 0.0;
+		D obj_temp3 = 0.0;
+		for (unsigned int i = 0; i < instance.n; i++) {
+			obj_temp1 += 0.5 * (instance.x[i] + potent[i]) * (instance.x[i] + potent[i])
+																		  - (instance.x[i] + potent[i]) * instance.b[i];
+		}
+
+		std::vector<D> Apotent(instance.m);
+		cblas_set_to_zero(Apotent);
+		vectormatrix_b(potent, instance.A_csr_values, instance.A_csr_col_idx,instance.A_csr_row_ptr,
+				instance.b, 1.0, instance.n, Apotent);
+
+		D g_norm = cblas_l2_norm(instance.m, &Apotent[0], 1);
+		obj_temp3 = g_norm * g_norm;
+
+		for (L i = 0; i < instance.m; i++)
+			obj_temp2 += w[i] * Apotent[i];
+
+		potent_obj = 1.0 / instance.total_n * (obj_temp1 + obj_temp2 + 0.5 * instance.penalty * instance.oneOverLambdaN * obj_temp3);
+
 	}
 
 	virtual void compute_subproproblem_gradient(ProblemData<L, D> &instance,
@@ -69,11 +95,12 @@ public:
 		matrixvector(instance.A_csr_values, instance.A_csr_col_idx, instance.A_csr_row_ptr, w, instance.n, gradient_temp1);
 		vectormatrix_b(deltaAlpha, instance.A_csr_values, instance.A_csr_col_idx,instance.A_csr_row_ptr,
 				instance.b, 1.0, instance.n, gradient_temp2);
-		matrixvector(instance.A_csr_values, instance.A_csr_col_idx, instance.A_csr_row_ptr, gradient_temp2, instance.n, gradient_temp3);
+		matrixvector(instance.A_csr_values, instance.A_csr_col_idx, instance.A_csr_row_ptr,
+				gradient_temp2, instance.n, gradient_temp3);
 
 		for (L i = 0; i < instance.n; i++){
 			gradient[i] = 1.0 / instance.total_n * ( gradient_temp1[i] * instance.b[i] + instance.x[i] - instance.b[i]
-						+ 1.0 * instance.penalty * instance.oneOverLambdaN  * gradient_temp3[i] * instance.b[i] + deltaAlpha[i] );
+				 + 1.0 * instance.penalty * instance.oneOverLambdaN  * gradient_temp3[i] * instance.b[i] + deltaAlpha[i] );
 		}
 
 	}
@@ -92,30 +119,14 @@ public:
 				break;
 			}
 
-			for (L i = 0; i < instance.n; i++)
+			for (L i = 0; i < instance.n; i++){
 				potent[i] = deltaAlpha[i] - a * search_direction[i];
-
-			D obj = 0.0;
-			D obj_temp1 = 0.0;
-			D obj_temp2 = 0.0;
-			D obj_temp3 = 0.0;
-			for (unsigned int i = 0; i < instance.n; i++) {
-				obj_temp1 += 0.5 * (instance.x[i] + potent[i]) * (instance.x[i] + potent[i])
-										  - (instance.x[i] + potent[i]) * instance.b[i];
 			}
 
-			std::vector<D> Apotent(instance.m);
-			cblas_set_to_zero(Apotent);
-			vectormatrix_b(potent, instance.A_csr_values, instance.A_csr_col_idx,instance.A_csr_row_ptr,
-					instance.b, 1.0, instance.n, Apotent);
+			D obj = 0.0;
 
-			D g_norm = cblas_l2_norm(instance.m, &Apotent[0], 1);
-			obj_temp3 = g_norm * g_norm;
+			this->compute_subproproblem_obj(instance, potent, w, obj);
 
-			for (L i = 0; i < instance.m; i++)
-				obj_temp2 += w[i] * Apotent[i];
-
-			obj = 1.0 / instance.total_n * (obj_temp1 + obj_temp2 + 0.5 * instance.penalty * instance.oneOverLambdaN * obj_temp3);
 			D gg;
 			gg = cblas_l2_norm(instance.n, &search_direction[0], 1);
 			//cout<<a<<"    "<<obj<<"    "<<dualobj - c1ls * a * gg * gg<<endl;
@@ -211,7 +222,7 @@ public:
 			for (L i = kai; i <= wan; i++){
 				L ii = i;
 				if (i >= limit_BFGS)
-					ii = i - 10;
+					ii = i - limit_BFGS;
 
 				bb = 0.0;
 				for (L j = 0; j < instance.n; j++)

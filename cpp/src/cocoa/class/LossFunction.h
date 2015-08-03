@@ -51,6 +51,12 @@ public:
 
 	}
 
+	virtual void subproblem_solver_CG(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
+			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
+			mpi::communicator &world, D gamma, Context &ctx, std::ofstream &logFile) {
+
+	}
+
 	virtual void subproblem_solver_LBFGS(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
 			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
 			mpi::communicator &world, D gamma, Context &ctx, std::ofstream &logFile) {
@@ -69,6 +75,11 @@ public:
 
 	}
 
+	virtual void compute_subproproblem_obj(ProblemData<L, D> &instance,
+			std::vector<D> &deltaAlpha, std::vector<D> &search_direction, std::vector<D> &w, D dualobj,
+			D &rho, D &c1ls, D &a, DistributedSettings & distributedSettings){
+
+	}
 	virtual void compute_subproproblem_gradient(ProblemData<L, D> &instance,
 			std::vector<D> &gradient, std::vector<D> &deltaAlpha, std::vector<D> &w){
 
