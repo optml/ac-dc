@@ -186,6 +186,15 @@ int main(int argc, char *argv[]) {
 	case 4:
 		lf->subproblem_solver_CG(instance, deltaAlpha, w, wBuffer, deltaW,
 									distributedSettings, world, gamma, ctx, logFile);
+		break;
+
+	case 5:
+		lf->subproblem_solver_BB(instance, deltaAlpha, w, wBuffer, deltaW,
+									distributedSettings, world, gamma, ctx, logFile);
+		break;
+	case 6:
+		lf->subproblem_solver_FISTA(instance, deltaAlpha, w, wBuffer, deltaW,
+									distributedSettings, world, gamma, ctx, logFile);
 
 		break;
 	default:

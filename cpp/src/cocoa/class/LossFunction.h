@@ -63,6 +63,18 @@ public:
 
 	}
 
+	virtual void subproblem_solver_BB(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
+			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
+			mpi::communicator &world, D gamma, Context &ctx, std::ofstream &logFile) {
+
+	}
+
+	virtual void subproblem_solver_FISTA(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
+			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
+			mpi::communicator &world, D gamma, Context &ctx, std::ofstream &logFile) {
+
+	}
+
 	virtual void LBFGS_update(ProblemData<L, D> &instance, std::vector<D> &search_direction, std::vector<D> &old_grad,
 			std::vector<D> &sk, std::vector<D> &rk, std::vector<D> &gradient, std::vector<D> &oneoversy,
 			L iter_counter, int limit_BFGS, int flag_BFGS) {
