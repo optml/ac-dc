@@ -460,7 +460,73 @@ public:
 
 	}
 
+      virtual void subproblem_solver_SDCA_without_duality(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
+            std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
+            mpi::communicator &world, D gamma, Context &ctx, std::ofstream &logFile) {
 
+        double start = 0 ;
+        double finish = 0 ;
+        double elapsedTime = 0 ;
+        std::vector<D> deltaAlphabuf(instance.m, 0);
+
+        for (unsigned int t = 0; t < distributedSettings.iters_communicate_count; t++) {
+
+            start = gettime_();
+
+            for (int jj = 0; jj < distributedSettings.iters_bulkIterations_count; jj++) {
+                cblas_set_to_zero(deltaW);
+                cblas_set_to_zero(deltaAlphabuf);
+
+                for (unsigned int it = 0; it < distributedSettings.iterationsPerThread; it++) {
+                    L idx = rand() / (0.0 + RAND_MAX) * instance.n;
+                    // compute "delta alpha" = argmin
+                    D dotProduct = 0;
+                    for (L i = instance.A_csr_row_ptr[idx];
+                            i < instance.A_csr_row_ptr[idx + 1]; i++) {
+                      instance.penalty = 0; // accuracy solution
+                        dotProduct += (w[instance.A_csr_col_idx[i]]
+                                       + 1.0 * instance.penalty * deltaW[instance.A_csr_col_idx[i]])
+                                      * instance.A_csr_values[i];
+                    }
+                    std::vector<D> unbiasedEstimator(instance.m, 0);
+                    D nablabuff = dotProduct - instance.b[idx];
+                    for(L ii = instance.A_csr_row_ptr[idx];
+                            ii < instance.A_csr_row_ptr[idx + 1]; ii++) {
+                            int ibuf = instance.A_csr_col_idx[ii];
+                        unbiasedEstimator[ibuf] = nablabuff * instance.A_csr_values[ibuf];
+                    }
+                    cblas_sum_of_vectors(unbiasedEstimator, deltaAlphabuf);
+                    D beta = 0.0001;
+                    cblas_sum_of_vectors(deltaAlphabuf, unbiasedEstimator, -beta);
+                    cblas_sum_of_vectors(deltaW, unbiasedEstimator, -beta/(instance.lambda * instance.n));
+                   }
+                vall_reduce(world, deltaW, wBuffer);
+                std::vector<D> deltaAlphaBuffer(instance.m, 0);
+                vall_reduce(world, deltaAlphabuf, deltaAlphaBuffer);
+                gamma = 1; // set np = 1
+                cblas_sum_of_vectors(w, wBuffer, gamma);
+                cblas_sum_of_vectors(instance.x, deltaAlphaBuffer, gamma);
+            }
+            double primalError;
+            double dualError;
+
+            finish = gettime_();
+            elapsedTime += finish - start;
+
+            this->computeObjectiveValue(instance, world, w, dualError, primalError);
+
+            if (ctx.settings.verbose) {
+                cout << "Iteration " << t << " elapsed time " << elapsedTime
+                     << "  error " << primalError << "    " << dualError
+                     << "    " << primalError + dualError << endl;
+
+                logFile << t << "," << elapsedTime << "," << primalError << ","
+                        << dualError << "," << primalError + dualError << endl;
+
+            }
+        }
+
+    }
 
 	virtual void subproblem_solver_BB(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
 			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
