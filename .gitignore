@@ -45,4 +45,5 @@ c/.metadata
 release/*
 matlab/lib/gloptipoly3
 octave-core
-
+data
+release

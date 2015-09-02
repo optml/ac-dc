@@ -16,7 +16,8 @@ public:
 	QuadraticLossCD() {
 
 	}
-	virtual ~QuadraticLossCD() {}
+	virtual ~QuadraticLossCD() {
+	}
 
 	virtual void init(ProblemData<L, D> & instance) {
 
@@ -24,10 +25,8 @@ public:
 		instance.vi.resize(instance.n);
 
 		for (L idx = 0; idx < instance.n; idx++) {
-			D norm = cblas_l2_norm(
-					instance.A_csr_row_ptr[idx + 1]
-										   - instance.A_csr_row_ptr[idx],
-										   &instance.A_csr_values[instance.A_csr_row_ptr[idx]], 1);
+			D norm = cblas_l2_norm(instance.A_csr_row_ptr[idx + 1] - instance.A_csr_row_ptr[idx],
+					&instance.A_csr_values[instance.A_csr_row_ptr[idx]], 1);
 			instance.Li[idx] = 1.0 / (norm * norm * instance.penalty * instance.oneOverLambdaN + 1.0);
 
 			instance.vi[idx] = norm * norm;
@@ -35,8 +34,8 @@ public:
 
 	}
 
-	virtual void subproblem_solver_SDCA(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
-			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
+	virtual void subproblem_solver_SDCA(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha, std::vector<D> &w,
+			std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
 			mpi::communicator &world, D gamma, Context &ctx, std::ofstream &logFile) {
 
 		double start = 0;
@@ -55,19 +54,18 @@ public:
 					L idx = rand() / (0.0 + RAND_MAX) * instance.n;
 					// compute "delta alpha" = argmin
 					D dotProduct = 0;
-					for (L i = instance.A_csr_row_ptr[idx];
-							i < instance.A_csr_row_ptr[idx + 1]; i++) {
+					for (L i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++) {
 						dotProduct += (w[instance.A_csr_col_idx[i]]
-										 + 1.0 * instance.penalty * deltaW[instance.A_csr_col_idx[i]])
-																																										* instance.A_csr_values[i];
+								+ 1.0 * instance.penalty * deltaW[instance.A_csr_col_idx[i]])
+								* instance.A_csr_values[i];
 					}
 					D alphaI = instance.x[idx] + deltaAlpha[idx];
 					D deltaAl = 0; // FINISH
 					deltaAl = (1.0 * instance.b[idx] - alphaI - dotProduct * instance.b[idx]) * instance.Li[idx];
 					deltaAlpha[idx] += deltaAl;
-					for (L i = instance.A_csr_row_ptr[idx];
-							i < instance.A_csr_row_ptr[idx + 1]; i++)
-						deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN * deltaAl * instance.A_csr_values[i] * instance.b[idx];
+					for (L i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
+						deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN * deltaAl
+								* instance.A_csr_values[i] * instance.b[idx];
 
 				}
 				vall_reduce(world, deltaW, wBuffer);
@@ -83,12 +81,11 @@ public:
 			this->computeObjectiveValue(instance, world, w, dualError, primalError);
 
 			if (ctx.settings.verbose) {
-				cout << "Iteration " << t << " elapsed time " << elapsedTime
-						<< "  error " << primalError << "    " << dualError
-						<< "    " << primalError + dualError << endl;
+				cout << "Iteration " << t << " elapsed time " << elapsedTime << "  error " << primalError << "    "
+						<< dualError << "    " << primalError + dualError << endl;
 
-				logFile << t << "," << elapsedTime << "," << primalError << ","
-						<< dualError << "," << primalError + dualError << endl;
+				logFile << t << "," << elapsedTime << "," << primalError << "," << dualError << ","
+						<< primalError + dualError << endl;
 
 			}
 		}
@@ -96,8 +93,9 @@ public:
 	}
 
 	virtual void subproblem_solver_accelerated_SDCA(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
-			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
-			mpi::communicator &world, D gamma, Context &ctx, std::ofstream &logFile) {
+			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW,
+			DistributedSettings & distributedSettings, mpi::communicator &world, D gamma, Context &ctx,
+			std::ofstream &logFile) {
 
 		double start = 0;
 		double finish = 0;
@@ -128,8 +126,8 @@ public:
 				cblas_set_to_zero(deltaAyk);
 
 				for (unsigned int it = 0; it < distributedSettings.iterationsPerThread; it++)
-					this->accelerated_SDCA_oneIteration(instance, deltaAlpha, w, deltaW,
-							zk, uk, yk, deltayk, Ayk, deltaAyk, theta, distributedSettings);
+					this->accelerated_SDCA_oneIteration(instance, deltaAlpha, w, deltaW, zk, uk, yk, deltayk, Ayk,
+							deltaAyk, theta, distributedSettings);
 
 				double thetasq = theta * theta;
 				theta = 0.5 * sqrt(thetasq * thetasq + 4 * thetasq) - 0.5 * thetasq;
@@ -160,40 +158,38 @@ public:
 			this->computeObjectiveValue(instance, world, w, dualError, primalError);
 
 			if (ctx.settings.verbose) {
-				cout << "Iteration " << t << " elapsed time " << elapsedTime
-						<< "  error " << primalError << "    " << dualError
-						<< "    " << primalError + dualError << endl;
+				cout << "Iteration " << t << " elapsed time " << elapsedTime << "  error " << primalError << "    "
+						<< dualError << "    " << primalError + dualError << endl;
 
-				logFile << t << "," << elapsedTime << "," << primalError << ","
-						<< dualError << "," << primalError + dualError << endl;
+				logFile << t << "," << elapsedTime << "," << primalError << "," << dualError << ","
+						<< primalError + dualError << endl;
 			}
-
 
 		}
 	}
 
-
-	virtual void accelerated_SDCA_oneIteration(ProblemData<L, D> &instance,
-			std::vector<D> &deltaAlpha, std::vector<D> &w, std::vector<D> &deltaW, std::vector<D> &zk, std::vector<D> &uk,
-			std::vector<D> &yk, std::vector<D> &deltayk, std::vector<D> &Ayk, std::vector<D> &deltaAyk,
-			D &theta, DistributedSettings & distributedSettings) {
+	virtual void accelerated_SDCA_oneIteration(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
+			std::vector<D> &w, std::vector<D> &deltaW, std::vector<D> &zk, std::vector<D> &uk, std::vector<D> &yk,
+			std::vector<D> &deltayk, std::vector<D> &Ayk, std::vector<D> &deltaAyk, D &theta,
+			DistributedSettings & distributedSettings) {
 
 		D thetasquare = theta * theta;
 		L idx = rand() / (0.0 + RAND_MAX) * instance.n;
 
 		D dotProduct = 0;
 		for (L i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++) {
-			dotProduct += (1.0 * Ayk[instance.A_csr_col_idx[i]] + instance.penalty * deltaAyk[instance.A_csr_col_idx[i]])
-																																										* instance.A_csr_values[i];
+			dotProduct +=
+					(1.0 * Ayk[instance.A_csr_col_idx[i]] + instance.penalty * deltaAyk[instance.A_csr_col_idx[i]])
+							* instance.A_csr_values[i];
 		}
 		//matrixvector(instance.A_csr_values, instance.A_csr_col_idx,instance.A_csr_row_ptr ,
 		//		yk, instance.m, Apotent);
 
-		D tk = ( 1.0 * instance.b[idx] - zk[idx] - dotProduct * instance.b[idx] ) //- thetasquare * uk[idx])
-																													/ (instance.vi[idx] * instance.n /distributedSettings.iterationsPerThread
-																															* theta * instance.penalty * instance.oneOverLambdaN + 1.);
+		D tk = (1.0 * instance.b[idx] - zk[idx] - dotProduct * instance.b[idx]) //- thetasquare * uk[idx])
+				/ (instance.vi[idx] * instance.n / distributedSettings.iterationsPerThread * theta * instance.penalty
+						* instance.oneOverLambdaN + 1.);
 		zk[idx] += tk;
-		uk[idx] -= (1.0 - theta * instance.n /distributedSettings.iterationsPerThread) / (thetasquare) * tk;
+		uk[idx] -= (1.0 - theta * instance.n / distributedSettings.iterationsPerThread) / (thetasquare) * tk;
 
 		D deltaAl = thetasquare * uk[idx] + zk[idx] - instance.x[idx] - deltaAlpha[idx];
 		deltaAlpha[idx] += deltaAl;
@@ -202,7 +198,8 @@ public:
 		//cout <<idx<<"          "<< theta << "    "<<uk[idx] << "    " <<zk[idx] <<endl;
 
 		for (L i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++) {
-			deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN * instance.A_csr_values[i] * deltaAl* instance.b[idx];
+			deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN * instance.A_csr_values[i] * deltaAl
+					* instance.b[idx];
 		}
 
 		D thetanext = theta;
@@ -212,21 +209,23 @@ public:
 		//yk[idx] = thetanext * thetanext * uk[idx] + zk[idx];
 
 		for (L i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++) {
-			deltaAyk[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN * instance.A_csr_values[i] * dyk* instance.b[idx];
+			deltaAyk[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN * instance.A_csr_values[i] * dyk
+					* instance.b[idx];
 		}
 
 	}
 
 	virtual void subproblem_solver_steepestdescent(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
-			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
-			mpi::communicator &world, D gamma, Context &ctx, std::ofstream &logFile) {
+			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW,
+			DistributedSettings & distributedSettings, mpi::communicator &world, D gamma, Context &ctx,
+			std::ofstream &logFile) {
 
 		double start = 0;
 		double finish = 0;
 		double elapsedTime = 0;
 
 		double dualobj = 0;
-		std::vector<D> gradient(instance.n);
+		std::vector < D > gradient(instance.n);
 		D rho = 0.8;
 		D c1ls = 0.1;
 		D a = 20.00;
@@ -238,12 +237,13 @@ public:
 				cblas_set_to_zero(deltaAlpha);
 
 				this->compute_subproproblem_gradient(instance, gradient, deltaAlpha, w);
-				this->backtrack_linesearch(instance, deltaAlpha, gradient, w, dualobj, rho, c1ls, a, distributedSettings);
+				this->backtrack_linesearch(instance, deltaAlpha, gradient, w, dualobj, rho, c1ls, a,
+						distributedSettings);
 
-				for (unsigned int idx = 0; idx < instance.n; idx++){
-					for (unsigned int i = instance.A_csr_row_ptr[idx];	i < instance.A_csr_row_ptr[idx + 1]; i++)
-						deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN
-						* instance.A_csr_values[i] * deltaAlpha[idx]* instance.b[idx];
+				for (unsigned int idx = 0; idx < instance.n; idx++) {
+					for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
+						deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN * instance.A_csr_values[i]
+								* deltaAlpha[idx] * instance.b[idx];
 				}
 
 				vall_reduce(world, deltaW, wBuffer);
@@ -261,21 +261,18 @@ public:
 			this->computeObjectiveValue(instance, world, w, dualError, primalError);
 
 			if (ctx.settings.verbose) {
-				cout << "Iteration " << t << " elapsed time " << elapsedTime
-						<< "  error " << primalError << "    " << dualError
-						<< "    " << primalError + dualError << endl;
+				cout << "Iteration " << t << " elapsed time " << elapsedTime << "  error " << primalError << "    "
+						<< dualError << "    " << primalError + dualError << endl;
 
-				logFile << t << "," << elapsedTime << "," << primalError << ","
-						<< dualError << "," << primalError + dualError << endl;
-
+				logFile << t << "," << elapsedTime << "," << primalError << "," << dualError << ","
+						<< primalError + dualError << endl;
 
 			}
 		}
 	}
 
-
-	virtual void subproblem_solver_LBFGS(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
-			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
+	virtual void subproblem_solver_LBFGS(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha, std::vector<D> &w,
+			std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
 			mpi::communicator &world, D gamma, Context &ctx, std::ofstream &logFile) {
 
 		double start = 0;
@@ -290,10 +287,10 @@ public:
 		cblas_set_to_zero(sk);
 		cblas_set_to_zero(rk);
 
-		std::vector<D> gradient(instance.n);
-		std::vector<D> search_direction(instance.n);
+		std::vector < D > gradient(instance.n);
+		std::vector < D > search_direction(instance.n);
 		int flag_BFGS = 0;
-		std::vector<D> oneoversy(limit_BFGS);
+		std::vector < D > oneoversy(limit_BFGS);
 
 		D rho = 0.8;
 		D c1ls = 0.1;
@@ -302,31 +299,31 @@ public:
 		for (unsigned int t = 0; t < distributedSettings.iters_communicate_count; t++) {
 			start = gettime_();
 
-			for (int jj = 0; jj <1; jj++) {
+			for (int jj = 0; jj < 1; jj++) {
 
 				cblas_set_to_zero(deltaW);
 				cblas_set_to_zero(deltaAlpha);
 
-
-				for (L iter_counter = 0; iter_counter < 10; iter_counter++){
+				for (L iter_counter = 0; iter_counter < 10; iter_counter++) {
 
 					this->compute_subproproblem_gradient(instance, gradient, deltaAlpha, w);
-					this->LBFGS_update(instance, search_direction, old_grad,
-							sk, rk, gradient, oneoversy, iter_counter, limit_BFGS, flag_BFGS);
-					this->backtrack_linesearch(instance, deltaAlpha, search_direction, w, dualobj, rho, c1ls, a, distributedSettings);
+					this->LBFGS_update(instance, search_direction, old_grad, sk, rk, gradient, oneoversy, iter_counter,
+							limit_BFGS, flag_BFGS);
+					this->backtrack_linesearch(instance, deltaAlpha, search_direction, w, dualobj, rho, c1ls, a,
+							distributedSettings);
 
 					for (L idx = 0; idx < instance.n; idx++)
-						sk[instance.n * flag_BFGS + idx] = - a * search_direction[idx];
+						sk[instance.n * flag_BFGS + idx] = -a * search_direction[idx];
 
 					flag_BFGS += 1;
 					if (flag_BFGS == limit_BFGS)
 						flag_BFGS = 0;
 
 				}
-				for (unsigned int idx = 0; idx < instance.n; idx++){
-					for (unsigned int i = instance.A_csr_row_ptr[idx];	i < instance.A_csr_row_ptr[idx + 1]; i++)
-						deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN
-						* instance.A_csr_values[i] * deltaAlpha[idx]* instance.b[idx];
+				for (unsigned int idx = 0; idx < instance.n; idx++) {
+					for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
+						deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN * instance.A_csr_values[i]
+								* deltaAlpha[idx] * instance.b[idx];
 				}
 
 				vall_reduce(world, deltaW, wBuffer);
@@ -342,21 +339,19 @@ public:
 			this->computeObjectiveValue(instance, world, w, dualError, primalError);
 
 			if (ctx.settings.verbose) {
-				cout << "Iteration " << t << " elapsed time " << elapsedTime
-						<< "  error " << primalError << "    " << dualError
-						<< "    " << primalError + dualError << endl;
+				cout << "Iteration " << t << " elapsed time " << elapsedTime << "  error " << primalError << "    "
+						<< dualError << "    " << primalError + dualError << endl;
 
-				logFile << t << "," << elapsedTime << "," << primalError << ","
-						<< dualError << "," << primalError + dualError << endl;
+				logFile << t << "," << elapsedTime << "," << primalError << "," << dualError << ","
+						<< primalError + dualError << endl;
 
 			}
 		}
 
 	}
 
-
-	virtual void subproblem_solver_CG(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
-			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
+	virtual void subproblem_solver_CG(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha, std::vector<D> &w,
+			std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
 			mpi::communicator &world, D gamma, Context &ctx, std::ofstream &logFile) {
 		double start = 0;
 		double finish = 0;
@@ -393,10 +388,10 @@ public:
 					std::vector<double> cg_Ap(instance.m);
 					std::vector<double> cg_AAp(instance.n);
 
-					vectormatrix_b(cg_p, instance.A_csr_values, instance.A_csr_col_idx,instance.A_csr_row_ptr,
+					vectormatrix_b(cg_p, instance.A_csr_values, instance.A_csr_col_idx, instance.A_csr_row_ptr,
 							instance.b, 1.0, instance.n, cg_Ap); // Ap
-					matrixvector(instance.A_csr_values, instance.A_csr_col_idx, instance.A_csr_row_ptr,
-							cg_Ap, instance.n, cg_AAp); //A'Ap
+					matrixvector(instance.A_csr_values, instance.A_csr_col_idx, instance.A_csr_row_ptr, cg_Ap,
+							instance.n, cg_AAp); //A'Ap
 
 					for (unsigned int i = 0; i < instance.m; i++)
 						denom += cg_Ap[i] * cg_Ap[i];
@@ -404,14 +399,14 @@ public:
 					denom = denom * instance.penalty * instance.oneOverLambdaN;
 
 					D nomer = 0.0;
-					for (unsigned int idx = 0; idx < instance.n; idx++){
+					for (unsigned int idx = 0; idx < instance.n; idx++) {
 						nomer += cg_r[idx] * cg_r[idx];
 						denom += cg_p[idx] * cg_p[idx];
 					}
 					cg_a = nomer / denom;
 
 					D nomer_next = 0.0;
-					for (unsigned int idx = 0; idx < instance.n; idx++){
+					for (unsigned int idx = 0; idx < instance.n; idx++) {
 						deltaAlpha[idx] += cg_a * cg_p[idx];
 						cg_r[idx] += cg_a * cg_AAp[idx] * instance.b[idx] * instance.penalty * instance.oneOverLambdaN
 								+ cg_a * cg_p[idx];
@@ -424,15 +419,15 @@ public:
 						cg_p[idx] = -cg_r[idx] + cg_beta * cg_p[idx];
 
 					D r_norm = cblas_l2_norm(instance.n, &cg_r[0], 1);
-					if (r_norm < 1e-6){
+					if (r_norm < 1e-6) {
 						//cout<<it<<endl;
 						break;
 					}
 				}
-				for (unsigned int idx = 0; idx < instance.n; idx++){
-					for (unsigned int i = instance.A_csr_row_ptr[idx];	i < instance.A_csr_row_ptr[idx + 1]; i++)
-						deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN
-						* instance.A_csr_values[i] * deltaAlpha[idx]* instance.b[idx];
+				for (unsigned int idx = 0; idx < instance.n; idx++) {
+					for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
+						deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN * instance.A_csr_values[i]
+								* deltaAlpha[idx] * instance.b[idx];
 				}
 
 				vall_reduce(world, deltaW, wBuffer);
@@ -448,88 +443,85 @@ public:
 			this->computeObjectiveValue(instance, world, w, dualError, primalError);
 
 			if (ctx.settings.verbose) {
-				cout << "Iteration " << t << " elapsed time " << elapsedTime
-						<< "  error " << primalError << "    " << dualError
-						<< "    " << primalError + dualError << endl;
+				cout << "Iteration " << t << " elapsed time " << elapsedTime << "  error " << primalError << "    "
+						<< dualError << "    " << primalError + dualError << endl;
 
-				logFile << t << "," << elapsedTime << "," << primalError << ","
-						<< dualError << "," << primalError + dualError << endl;
+				logFile << t << "," << elapsedTime << "," << primalError << "," << dualError << ","
+						<< primalError + dualError << endl;
 
 			}
 		}
 
 	}
 
-      virtual void subproblem_solver_SDCA_without_duality(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
-            std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
-            mpi::communicator &world, D gamma, Context &ctx, std::ofstream &logFile) {
+	virtual void subproblem_solver_SDCA_without_duality(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
+			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW,
+			DistributedSettings & distributedSettings, mpi::communicator &world, D gamma, Context &ctx,
+			std::ofstream &logFile) {
 
-        double start = 0 ;
-        double finish = 0 ;
-        double elapsedTime = 0 ;
-        std::vector<D> deltaAlphabuf(instance.m, 0);
+		double start = 0;
+		double finish = 0;
+		double elapsedTime = 0;
+		std::vector < D > deltaAlphabuf(instance.m, 0);
 
-        for (unsigned int t = 0; t < distributedSettings.iters_communicate_count; t++) {
+		for (unsigned int t = 0; t < distributedSettings.iters_communicate_count; t++) {
 
-            start = gettime_();
+			start = gettime_();
 
-            for (int jj = 0; jj < distributedSettings.iters_bulkIterations_count; jj++) {
-                cblas_set_to_zero(deltaW);
-                cblas_set_to_zero(deltaAlphabuf);
+			for (int jj = 0; jj < distributedSettings.iters_bulkIterations_count; jj++) {
+				cblas_set_to_zero(deltaW);
+				cblas_set_to_zero(deltaAlphabuf);
 
-                for (unsigned int it = 0; it < distributedSettings.iterationsPerThread; it++) {
-                    L idx = rand() / (0.0 + RAND_MAX) * instance.n;
-                    // compute "delta alpha" = argmin
-                    D dotProduct = 0;
-                    for (L i = instance.A_csr_row_ptr[idx];
-                            i < instance.A_csr_row_ptr[idx + 1]; i++) {
-                      instance.penalty = 0; // accuracy solution
-                        dotProduct += (w[instance.A_csr_col_idx[i]]
-                                       + 1.0 * instance.penalty * deltaW[instance.A_csr_col_idx[i]])
-                                      * instance.A_csr_values[i];
-                    }
-                    std::vector<D> unbiasedEstimator(instance.m, 0);
-                    D nablabuff = dotProduct - instance.b[idx];
-                    for(L ii = instance.A_csr_row_ptr[idx];
-                            ii < instance.A_csr_row_ptr[idx + 1]; ii++) {
-                            int ibuf = instance.A_csr_col_idx[ii];
-                        unbiasedEstimator[ibuf] = nablabuff * instance.A_csr_values[ibuf];
-                    }
-                    cblas_sum_of_vectors(unbiasedEstimator, deltaAlphabuf);
-                    D beta = 0.0001;
-                    cblas_sum_of_vectors(deltaAlphabuf, unbiasedEstimator, -beta);
-                    cblas_sum_of_vectors(deltaW, unbiasedEstimator, -beta/(instance.lambda * instance.n));
-                   }
-                vall_reduce(world, deltaW, wBuffer);
-                std::vector<D> deltaAlphaBuffer(instance.m, 0);
-                vall_reduce(world, deltaAlphabuf, deltaAlphaBuffer);
-                gamma = 1; // set np = 1
-                cblas_sum_of_vectors(w, wBuffer, gamma);
-                cblas_sum_of_vectors(instance.x, deltaAlphaBuffer, gamma);
-            }
-            double primalError;
-            double dualError;
+				for (unsigned int it = 0; it < distributedSettings.iterationsPerThread; it++) {
+					L idx = rand() / (0.0 + RAND_MAX) * instance.n;
+					// compute "delta alpha" = argmin
+					D dotProduct = 0;
+					for (L i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++) {
+						instance.penalty = 0; // accuracy solution
+						dotProduct += (w[instance.A_csr_col_idx[i]]
+								+ 1.0 * instance.penalty * deltaW[instance.A_csr_col_idx[i]])
+								* instance.A_csr_values[i];
+					}
+					std::vector < D > unbiasedEstimator(instance.m, 0);
+					D nablabuff = dotProduct - instance.b[idx];
+					for (L ii = instance.A_csr_row_ptr[idx]; ii < instance.A_csr_row_ptr[idx + 1]; ii++) {
+						int ibuf = instance.A_csr_col_idx[ii];
+						unbiasedEstimator[ibuf] = nablabuff * instance.A_csr_values[ibuf];
+					}
+					cblas_sum_of_vectors(unbiasedEstimator, deltaAlphabuf);
+					D beta = 0.0001;
+					cblas_sum_of_vectors(deltaAlphabuf, unbiasedEstimator, -beta);
+					cblas_sum_of_vectors(deltaW, unbiasedEstimator, -beta / (instance.lambda * instance.n));
+				}
+				vall_reduce(world, deltaW, wBuffer);
+				std::vector < D > deltaAlphaBuffer(instance.m, 0);
+				vall_reduce(world, deltaAlphabuf, deltaAlphaBuffer);
+				gamma = 1; // set np = 1
+				cblas_sum_of_vectors(w, wBuffer, gamma);
+				cblas_sum_of_vectors(instance.x, deltaAlphaBuffer, gamma);
+			}
+			double primalError;
+			double dualError;
 
-            finish = gettime_();
-            elapsedTime += finish - start;
+			finish = gettime_();
+			elapsedTime += finish - start;
 
-            this->computeObjectiveValue(instance, world, w, dualError, primalError);
+			this->computeObjectiveValue(instance, world, w, dualError, primalError);
 
-            if (ctx.settings.verbose) {
-                cout << "Iteration " << t << " elapsed time " << elapsedTime
-                     << "  error " << primalError << "    " << dualError
-                     << "    " << primalError + dualError << endl;
+			if (ctx.settings.verbose) {
+				cout << "Iteration " << t << " elapsed time " << elapsedTime << "  error " << primalError << "    "
+						<< dualError << "    " << primalError + dualError << endl;
 
-                logFile << t << "," << elapsedTime << "," << primalError << ","
-                        << dualError << "," << primalError + dualError << endl;
+				logFile << t << "," << elapsedTime << "," << primalError << "," << dualError << ","
+						<< primalError + dualError << endl;
 
-            }
-        }
+			}
+		}
 
-    }
+	}
 
-	virtual void subproblem_solver_BB(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
-			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
+	virtual void subproblem_solver_BB(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha, std::vector<D> &w,
+			std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
 			mpi::communicator &world, D gamma, Context &ctx, std::ofstream &logFile) {
 		double start = 0;
 		double finish = 0;
@@ -539,26 +531,26 @@ public:
 		D c1ls = 0.1;
 		D a = 20.0;
 
-		std::vector<D> gradient(instance.n);
-		std::vector<D> gradient_old(instance.n);
-		std::vector<D> yk(instance.n);
-		std::vector<D> sk(instance.n);
+		std::vector < D > gradient(instance.n);
+		std::vector < D > gradient_old(instance.n);
+		std::vector < D > yk(instance.n);
+		std::vector < D > sk(instance.n);
 
 		cblas_set_to_zero(deltaAlpha);
 		this->compute_subproproblem_gradient(instance, gradient, deltaAlpha, w);
 		this->backtrack_linesearch(instance, deltaAlpha, gradient, w, dualobj, rho, c1ls, a, distributedSettings);
 
-		for (unsigned int idx = 0; idx < instance.n; idx++){
-			for (unsigned int i = instance.A_csr_row_ptr[idx];	i < instance.A_csr_row_ptr[idx + 1]; i++)
-				deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN
-				* instance.A_csr_values[i] * deltaAlpha[idx]* instance.b[idx];
+		for (unsigned int idx = 0; idx < instance.n; idx++) {
+			for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
+				deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN * instance.A_csr_values[i]
+						* deltaAlpha[idx] * instance.b[idx];
 		}
 
 		vall_reduce(world, deltaW, wBuffer);
 		cblas_sum_of_vectors(w, wBuffer, gamma);
 		cblas_sum_of_vectors(instance.x, deltaAlpha, gamma);
 
-		for (unsigned int idx = 0; idx < instance.n; idx++){
+		for (unsigned int idx = 0; idx < instance.n; idx++) {
 			sk[idx] = deltaAlpha[idx];
 			gradient_old[idx] = gradient[idx];
 		}
@@ -571,19 +563,19 @@ public:
 				cblas_set_to_zero(deltaW);
 				cblas_set_to_zero(deltaAlpha);
 
-				for (L line_search_iter = 0; line_search_iter < 5; line_search_iter++){
+				for (L line_search_iter = 0; line_search_iter < 5; line_search_iter++) {
 
 					this->compute_subproproblem_gradient(instance, gradient, deltaAlpha, w);
 					double denom = 0.0;
 					double nom = 0.0;
-					for (unsigned int idx = 0; idx < instance.n; idx++){
+					for (unsigned int idx = 0; idx < instance.n; idx++) {
 						yk[idx] = gradient[idx] - gradient_old[idx];
 						denom += sk[idx] * yk[idx];
 						nom += sk[idx] * yk[idx];
 					}
 					double stepsize = 1.0 * nom / denom;
 
-					for (unsigned int idx = 0; idx < instance.n; idx++){
+					for (unsigned int idx = 0; idx < instance.n; idx++) {
 						deltaAlpha[idx] = -1.0 * stepsize * gradient[idx];
 						sk[idx] = deltaAlpha[idx];
 						gradient_old[idx] = gradient[idx];
@@ -591,10 +583,10 @@ public:
 
 				}
 
-				for (unsigned int idx = 0; idx < instance.n; idx++){
-					for (unsigned int i = instance.A_csr_row_ptr[idx];	i < instance.A_csr_row_ptr[idx + 1]; i++)
-						deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN
-						* instance.A_csr_values[i] * deltaAlpha[idx]* instance.b[idx];
+				for (unsigned int idx = 0; idx < instance.n; idx++) {
+					for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
+						deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN * instance.A_csr_values[i]
+								* deltaAlpha[idx] * instance.b[idx];
 				}
 
 				vall_reduce(world, deltaW, wBuffer);
@@ -610,74 +602,54 @@ public:
 			this->computeObjectiveValue(instance, world, w, dualError, primalError);
 
 			if (ctx.settings.verbose) {
-				cout << "Iteration " << t << " elapsed time " << elapsedTime
-						<< "  error " << primalError << "    " << dualError
-						<< "    " << primalError + dualError << endl;
+				cout << "Iteration " << t << " elapsed time " << elapsedTime << "  error " << primalError << "    "
+						<< dualError << "    " << primalError + dualError << endl;
 
-				logFile << t << "," << elapsedTime << "," << primalError << ","
-						<< dualError << "," << primalError + dualError << endl;
+				logFile << t << "," << elapsedTime << "," << primalError << "," << dualError << ","
+						<< primalError + dualError << endl;
 
 			}
 		}
 
 	}
 
-
-
-
-	virtual void subproblem_solver_FISTA(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha,
-			std::vector<D> &w, std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
+	virtual void subproblem_solver_FISTA(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha, std::vector<D> &w,
+			std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
 			mpi::communicator &world, D gamma, Context &ctx, std::ofstream &logFile) {
 		double start = 0;
 		double finish = 0;
 		double elapsedTime = 0;
 		double t0 = 1.0;
 		double t1 = 1.0;
-		double Lip = 100.0;
-		double eta = 2;
+		double Lip = 1.0; // initial Lip constant estimate
+		double eta = 1.5;
+
 		std::vector<double> y(instance.n);
-		std::vector<D> gradient(instance.n);
-		std::vector<D> potential(instance.n);
-
-
-		//for (unsigned int idx = 0; idx < instance.n; idx++){
-		//	Lip += instance.Li[idx];
-		//}
-
+		std::vector < D > gradient(instance.n);
+		std::vector < D > potential(instance.n);
 
 		for (unsigned int t = 0; t < distributedSettings.iters_communicate_count; t++) {
 			start = gettime_();
 
-			//for (L i = 0; i < instance.n; i++)
-			//	y[i] = instance.x[i];
-
-			t0 = 1.0; t1 = 1.0;
+			t0 = 1.0;
+			t1 = 1.0; // set initial values for FISTA step-size parameters
 
 			cblas_set_to_zero(y);
 			cblas_set_to_zero(deltaAlpha);
 
-			//std::vector<D> gradient_temp2(instance.m);
-			//std::vector<D> gradient_temp3(instance.n);
-			//vectormatrix_b(y, instance.A_csr_values, instance.A_csr_col_idx,instance.A_csr_row_ptr,
-			//		instance.b, 1.0, instance.n, gradient_temp2);
-			//matrixvector(instance.A_csr_values, instance.A_csr_col_idx, instance.A_csr_row_ptr,
-			//		gradient_temp2, instance.n, gradient_temp3);
-			//for (L i = 0; i < instance.n; i++){
-			//	gradient[i] = 1.0 / instance.total_n * ( y[i] - instance.b[i]
-			//	    + 1.0 * instance.penalty * instance.oneOverLambdaN  * gradient_temp3[i] * instance.b[i] );
-			//}
-			for (unsigned int kk = 0; kk < distributedSettings.iters_bulkIterations_count; kk++){
+			for (unsigned int kk = 0; kk < distributedSettings.iters_bulkIterations_count; kk++) {
 
 				this->compute_subproproblem_gradient(instance, gradient, y, w);
 
-				t1 = 0.5 * (1.0 + sqrt( 1.0 + t0 * t0 * 4.0) );
-
-				while (1){
+				t1 = 0.5 * (1.0 + sqrt(1.0 + t0 * t0 * 4.0));
+				double tmpFrac = (t0 - 1) / t1;
+				Lip = Lip / (eta + 0.0);
+				while (1) {
 					Lip = eta * Lip;
-					for (unsigned int idx = 0; idx < instance.n; idx++){
+					for (unsigned int idx = 0; idx < instance.n; idx++) {
 						double temp = deltaAlpha[idx];
 						potential[idx] = y[idx] - gradient[idx] / Lip;
-						y[idx] = potential[idx] + (t0 - 1) / t1 * (potential[idx] - temp);
+						y[idx] = potential[idx] + tmpFrac * (potential[idx] - temp);
 					}
 					double obj = 0.0;
 					this->compute_subproproblem_obj(instance, potential, w, obj);
@@ -685,15 +657,16 @@ public:
 					double obj_appro = 0.0;
 					this->compute_subproproblem_obj(instance, y, w, obj_appro);
 					this->compute_subproproblem_gradient(instance, gradient, y, w);
-					for (unsigned int idx = 0; idx < instance.n; idx++){
-						obj_appro += (potential[idx] - y[idx]) * gradient[idx] + 0.5 * Lip * (potential[idx] - y[idx]) * (potential[idx] - y[idx]);
+					for (unsigned int idx = 0; idx < instance.n; idx++) {
+						obj_appro += (potential[idx] - y[idx]) * gradient[idx]
+								+ 0.5 * Lip * (potential[idx] - y[idx]) * (potential[idx] - y[idx]);
 					}
 
-					if ( obj <= obj_appro ){
+					if (obj <= obj_appro) {
 						for (unsigned int idx = 0; idx < instance.n; idx++)
 							deltaAlpha[idx] = potential[idx];
 
-						cout<<Lip<<endl;
+//						cout << "Lip constant estimate " << Lip << endl;
 						break;
 					}
 
@@ -703,10 +676,10 @@ public:
 				//cout<<y[0]<<endl;
 			}
 
-			for (unsigned int idx = 0; idx < instance.n; idx++){
-				for (unsigned int i = instance.A_csr_row_ptr[idx];	i < instance.A_csr_row_ptr[idx + 1]; i++)
-					deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN
-					* instance.A_csr_values[i] * deltaAlpha[idx]* instance.b[idx];
+			for (unsigned int idx = 0; idx < instance.n; idx++) {
+				for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
+					deltaW[instance.A_csr_col_idx[i]] += instance.oneOverLambdaN * instance.A_csr_values[i]
+							* deltaAlpha[idx] * instance.b[idx];
 			}
 
 			vall_reduce(world, deltaW, wBuffer);
@@ -722,22 +695,18 @@ public:
 			this->computeObjectiveValue(instance, world, w, dualError, primalError);
 
 			if (ctx.settings.verbose) {
-				cout << "Iteration " << t << " elapsed time " << elapsedTime
-						<< "  error " << primalError << "    " << dualError
-						<< "    " << primalError + dualError << endl;
+				cout << "Iteration " << t << " elapsed time " << elapsedTime << "  error " << primalError << "    "
+						<< dualError << "    " << primalError + dualError << endl;
 
-				logFile << t << "," << elapsedTime << "," << primalError << ","
-						<< dualError << "," << primalError + dualError << endl;
+				logFile << t << "," << elapsedTime << "," << primalError << "," << dualError << ","
+						<< primalError + dualError << endl;
 
 			}
 		}
 
 	}
 
-
-
 };
 
 #endif /* QUADRATICLOSSCD_H_ */
-
 
