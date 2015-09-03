@@ -106,7 +106,7 @@ public:
 	}
 
 	virtual void backtrack_linesearch(ProblemData<L, D> &instance,
-			std::vector<D> &deltaAlpha, std::vector<D> &search_direction, std::vector<D> &w, D dualobj,
+			std::vector<D> &deltaAlpha, std::vector<D> &search_direction, std::vector<D> &w, D &dualobj,
 			D &rho, D &c1ls, D &a, DistributedSettings & distributedSettings){
 
 		int iter = 0;
@@ -114,8 +114,9 @@ public:
 
 		while (1){
 
-			if (iter > 50){
-				a = 0.0;
+			if (iter > 100){
+				cout<<a<<"    ";
+				//a = 1.0;
 				break;
 			}
 
@@ -145,6 +146,7 @@ public:
 				//				cout << iter <<endl;
 
 				dualobj = obj;
+
 				break;
 			}
 			a = rho * a;
