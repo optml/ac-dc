@@ -618,7 +618,7 @@ public:
 		double elapsedTime = 0;
 		double t0 = 1.0;
 		double t1 = 1.0;
-		double Lip = 1.0 / instance.total_n; // initial Lip constant estimate
+		double Lip = 1.0 / instance.n; // initial Lip constant estimate
 		double eta = 2.0;
 
 		std::vector<double> y(instance.n);
@@ -665,8 +665,7 @@ public:
 					if (obj < obj_appro) {
 						for (unsigned int idx = 0; idx < instance.n; idx++)
 							deltaAlpha[idx] = potential[idx];
-						//cout<< obj<<"   " <<obj_appro<<endl;
-						//cout << "Lip constant estimate " << Lip << endl;
+						//cout<< obj<<"   " <<obj_appro << "   Lip constant estimate " << Lip << endl;
 						break;
 					}
 
