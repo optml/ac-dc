@@ -462,7 +462,8 @@ public:
         double finish = 0 ;
         double elapsedTime = 0 ;
         D unbiasedestimator = 0;
-        D beta = 0.0001;
+        D beta = 0.05;
+        D eta = beta / (instance.lambda * instance.n);
 
         for (unsigned int t = 0; t < distributedSettings.iters_communicate_count; t++) {
 
@@ -474,43 +475,44 @@ public:
 
                 for (unsigned int it = 0; it < distributedSettings.iterationsPerThread; it++) {
                     L idx = rand() / (0.0 + RAND_MAX) * instance.n;
-                    // compute "delta alpha" = argmin
                     D dotProduct = 0;
                     for (L i = instance.A_csr_row_ptr[idx];
                             i < instance.A_csr_row_ptr[idx + 1]; i++) {
                         dotProduct += w[instance.A_csr_col_idx[i]] * instance.A_csr_values[i];
                     }
 
-                    unbiasedestimator = dotProduct - instance.b[idx] + instance.x[idx];
-                    deltaAlpha[idx] = - beta * unbiasedestimator ;
+                    unbiasedestimator = dotProduct - 1.0 * instance.b[idx] + instance.x[idx];
+                    deltaAlpha[idx] += - beta * unbiasedestimator ;
 
-                    cblas_sum_of_vectors(deltaW, instance.x, -beta / (instance.lambda * instance.n) * unbiasedestimator);
-                }
-                vall_reduce(world, deltaW, wBuffer);
-                gamma = 1; // set np = 1
-                cblas_sum_of_vectors(w, wBuffer, gamma);
-                cblas_sum_of_vectors(instance.x, deltaAlpha, gamma);
+                    for (L i = instance.A_csr_row_ptr[idx];
+                            i < instance.A_csr_row_ptr[idx + 1]; i++)
+                        deltaW[instance.A_csr_col_idx[i]] += - eta * unbiasedestimator * instance.A_csr_values[i];
             }
-            double primalError;
-            double dualError;
-
-            finish = gettime_();
-            elapsedTime += finish - start;
-
-            this->computeObjectiveValue(instance, world, w, dualError, primalError);
-
-            if (ctx.settings.verbose) {
-                cout << "Iteration " << t << " elapsed time " << elapsedTime
-                     << "  error " << primalError << "    " << dualError
-                     << "    " << primalError + dualError << endl;
-
-                logFile << t << "," << elapsedTime << "," << primalError << ","
-                        << dualError << "," << primalError + dualError << endl;
-
-            }
+            vall_reduce(world, deltaW, wBuffer);
+            gamma = 1; // set np = 1
+            cblas_sum_of_vectors(w, wBuffer, gamma);
+            cblas_sum_of_vectors(instance.x, deltaAlpha, gamma);
         }
+        double primalError;
+        double dualError;
 
+        finish = gettime_();
+        elapsedTime += finish - start;
+
+        this->computeObjectiveValue(instance, world, w, dualError, primalError);
+
+        if (ctx.settings.verbose) {
+            cout << "Iteration " << t << " elapsed time " << elapsedTime
+                 << "  error " << primalError << "    " << dualError
+                 << "    " << primalError + dualError << endl;
+
+            logFile << t << "," << elapsedTime << "," << primalError << ","
+                    << dualError << "," << primalError + dualError << endl;
+
+        }
     }
+
+}
 
     virtual void subproblem_solver_BB(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha, std::vector<D> &w,
             std::vector<D> &wBuffer, std::vector<D> &deltaW, DistributedSettings & distributedSettings,
