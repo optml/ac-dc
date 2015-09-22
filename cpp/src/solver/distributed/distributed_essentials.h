@@ -10,6 +10,10 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/list.hpp>
+#include <boost/serialization/vector.hpp>
+
+
+
 
 // #define USE_CUSTOM_VECTORS
 #define USE_BOOST_BITWISE_SERIALISATION
