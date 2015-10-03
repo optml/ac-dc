@@ -111,6 +111,7 @@ void CGSolver(std::vector<double> &A, int n,
 	cblas_dscal(n, -1.0, &p[0], 1);	
 
 	double tol = 1e-8;	
+	int iter = 0;
 
 	while (1){
 		cblas_set_to_zero(Ap);
@@ -129,10 +130,12 @@ void CGSolver(std::vector<double> &A, int n,
 
 		cblas_dscal(n, beta, &p[0], 1);		
 		cblas_daxpy(n, -1.0, &r[0], 1, &p[0], 1);
-
+		iter += 1;
 		//cout<<sqrt(nomNew)<<endl;
-		if (sqrt(nomNew) <= tol)
+		if (sqrt(nomNew) <= tol){
+			//cout<< iter <<endl;
 			break;
+		}
 
 	}
 

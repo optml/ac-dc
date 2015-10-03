@@ -53,11 +53,10 @@ int main(int argc, char *argv[]) {
 	instance.lambda = ctx.lambda;
 
 	double rho = 1.0 / instance.n;
-	double mu = 1.0;
+	double mu = 0.9;
 
 	std::vector<double> w(instance.m);
-	for (unsigned int i = 0; i < instance.m; i++)
-		w[i] = rand() / (RAND_MAX + 0.0);
+	//for (unsigned int i = 0; i < instance.m; i++)	w[i] = 0.1*rand() / (RAND_MAX + 0.0);
 
 	std::vector<double> vk(instance.m);
 	double deltak = 0.0;
@@ -70,8 +69,6 @@ int main(int argc, char *argv[]) {
 	//}
 
 
-	//double objective = 0.0;
-	//compute_objective(w, instance, objective);
 
 
 	MPI::Finalize();
