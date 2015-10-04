@@ -11,6 +11,7 @@
 #include "../solver/distributed/distributed_structures.h"
 #include "../helpers/option_distributed_console_parser.h"
 #include "discoHelper.h"
+#include "readWholeData.h"
 #include "../solver/distributed/distributed_essentials.h"
 
 //#ifdef MATLAB
@@ -34,52 +35,41 @@ int main(int argc, char *argv[]) {
 		ctx.settings.verbose = false;
 	}
 	ProblemData<unsigned int, double> instance;
+	ProblemData<unsigned int, double> newInstance;
 	instance.theta = ctx.tmp;
-	cout << "XXXXXXXx   " << instance.theta << endl;
-	cout << world.rank() << " going to load data" << endl;
+	//cout << "XXXXXXXx   " << instance.theta << endl;
+	//cout << world.rank() << " going to load data" << endl; 
 	//ctx.matrixAFile = "/Users/Schemmy/Desktop/ac-dc/cpp/data/a1a.4/a1a";
 	//cout<< ctx.matrixAFile<<endl;
 
-
-	loadDistributedSparseSVMRowData(ctx.matrixAFile, world.rank(), world.size(),
-			instance, false);
+	readWholeData(ctx.matrixAFile, instance, false);
+	
 	unsigned int finalM;
-
-	vall_reduce_maximum(world, &instance.m, &finalM, 1);
-	//cout << "Local m " << instance.m << "   global m " << finalM << endl;
-	instance.m = finalM;
-	//cout << " Local n " << instance.n << endl;
+	vall_reduce_maximum(world, &instance.m, &finalM, 1);  //cout << "Local m " << instance.m << "   global m " << finalM << endl;
+	instance.m = finalM;   //cout << " Local n " << instance.n << endl;
+	instance.lambda = ctx.lambda;
 	vall_reduce(world, &instance.n, &instance.total_n, 1);
 
-	instance.lambda = ctx.lambda;
+	partitionByFeature(instance, newInstance, world.size(), world.rank());
+	
+
 
 	double rho = 1.0 / instance.n;
-	double mu = 1.0;
+	double mu = 0.9;
 
 	std::vector<double> w(instance.m);
-	for (unsigned int i = 0; i < instance.m; i++)
-		w[i] = rand() / (RAND_MAX + 0.0);
+	//for (unsigned int i = 0; i < instance.m; i++)	w[i] = 0.1*rand() / (RAND_MAX + 0.0);
 
 	std::vector<double> vk(instance.m);
 	double deltak = 0.0;
 
 	//compute_initial_w(w, instance, rho);
 	//for (unsigned int i = 0; i < K; i++){
-	distributed_PCG(w, instance, mu, vk, deltak, world);
 	//	update_w(w, vk, deltak);
-
+	
 	//}
-
-
-	//double objective = 0.0;
-	//compute_objective(w, instance, objective);
-
-
-	MPI::Finalize();
+	//MPI::Finalize();
 
 	return 0;
 
 }
-
-
-

@@ -11,6 +11,7 @@
 #include "../solver/distributed/distributed_structures.h"
 #include "../helpers/option_distributed_console_parser.h"
 #include "discoHelper.h"
+#include "readWholeData.h"
 #include "../solver/distributed/distributed_essentials.h"
 
 //#ifdef MATLAB
@@ -67,11 +68,8 @@ int main(int argc, char *argv[]) {
 	//	update_w(w, vk, deltak);
 	
 	//}
-
-
-
-
-	MPI::Finalize();
+	ProblemData<unsigned int, double> instance2;
+	//MPI::Finalize();
 
 	return 0;
 

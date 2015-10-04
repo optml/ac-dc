@@ -118,7 +118,6 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 	std::vector<int> flag(1);
 	mpi::request reqs[1];
 
-	// /cout<<world.rank()<<"  "<<w[0]<<endl;
 
 	double epsilon;
 	double grad_norm;
@@ -154,15 +153,19 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 		if (world.rank() == 0) {
 			double grad_norm = cblas_l2_norm(instance.m, &gradient[0], 1);
 			epsilon = 0.05 * grad_norm * sqrt(instance.lambda / 10.0);
-			//cout<< grad_norm << "    " <<epsilon<<endl;
+			cout<< iter << "   "<< grad_norm << "    " <<epsilon<<"   ";
+			if (grad_norm < 1e-8){
+				cout<<endl;
+				break;
+			}
 
 			cblas_dcopy(instance.m, &gradient[0], 1, &r[0], 1);
 
 			for (unsigned int idx = 0; idx < instance.n; idx++) {
 				for (unsigned int i = instance.A_csr_row_ptr[idx];	i < instance.A_csr_row_ptr[idx + 1]; i++) {
 					for (unsigned int j = instance.A_csr_row_ptr[idx];	j < instance.A_csr_row_ptr[idx + 1]; j++) {
-						P[instance.m * i + j] += instance.A_csr_values[i] * instance.A_csr_values[j]
-						                         / instance.total_n;
+						P[instance.m * instance.A_csr_col_idx[i] + instance.A_csr_col_idx[j]] += 
+								instance.A_csr_values[i] * instance.A_csr_values[j] / instance.total_n;
 					}
 				}
 			}
@@ -175,17 +178,13 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 			cblas_dcopy(instance.m, &s[0], 1, &u[0], 1);
 
 		}
-		// if (world.rank() == 0) {
-		// 	CGSolver(Hessian, instance.m, gradient, vk);
-		// 	deltak = 0.0;
-		// 	cout<<iter<<"   "<< gradient[0]<<endl;
-		// }
+
+		int inner_iter = 0;
 		while (flag[0] != 0) {
 			vbroadcast(world, u, 0);
 			computeHessianTimesU(w, u, Hu_local, instance); //cout<<world.rank()<<"    "<<Hu_local[0]<<endl;
 			vall_reduce(world, Hu_local, Hu);
-			cblas_dscal(instance.m, 1.0 / world.size(), &Hu[0], 1);
-			//for (unsigned int i = 0; i < instance.m; i++)	cout<<i<<"    "<<Hu_local[i]<<"  "<<Hu[i]<<endl;
+			cblas_dscal(instance.m, 1.0 / world.size(), &Hu[0], 1); //for (unsigned int i = 0; i < instance.m; i++)	cout<<i<<"    "<<Hu_local[i]<<"  "<<Hu[i]<<endl;
 
 			if (world.rank() == 0) {
 				//cout<<"I will do this induvidually!!!!!!!!!!"<<endl;
@@ -197,7 +196,6 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 				cblas_daxpy(instance.m, alpha, &Hu[0], 1, &Hv[0], 1);
 				cblas_daxpy(instance.m, -alpha, &Hu[0], 1, &r[0], 1);
 
-
 				// ? solve linear system to get new s
 				CGSolver(P, instance.m, r, s);
 
@@ -207,37 +205,17 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 				cblas_daxpy(instance.m, 1.0, &s[0], 1, &u[0], 1);
 
 				double r_norm = cblas_l2_norm(instance.m, &r[0], 1);
-				//cout<<iter<<"    "<<r_norm<<endl;
+				inner_iter++;
 
-				// std::vector<double> left(instance.m);
-				// cblas_dgemv(CblasRowMajor, CblasNoTrans, instance.m, instance.m, 1.0, &Hessian[0],
-				// 		 instance.m, &v[0], 1, 1.0, &left[0], 1);
-				// 		cblas_daxpy(instance.m, -1.0, &gradient[0], 1, &left[0], 1);
-				// double error = cblas_l2_norm(instance.m, &left[0], 1);
-				// cout<<error<<endl;
-
-				if (r_norm <= epsilon) {
+				if (r_norm <= epsilon || inner_iter > 100) {
 					cblas_dcopy(instance.m, &v[0], 1, &vk[0], 1);
 					double vHv = cblas_ddot(instance.m, &vk[0], 1, &Hv[0], 1); //vHvT^(t) or vHvT^(t+1)
 					double vHu = cblas_ddot(instance.m, &vk[0], 1, &Hu[0], 1);
 					deltak = sqrt(vHv + alpha * vHu);
 					flag[0] = 0;
-					// for (int k = 1; k < world.size(); k++) {
-					// 	//					world.send(k, 0, &flag[0], flag.size());
-					// 	//					world.send(k, 0, flag);
-					// 	world.isend(k, 0, flag);
-					// 	mpi::wait_all(reqs, reqs + 1);
-					// }
 				}
 			}
-			//cout << world.rank() << "    " << flag << endl;
-			// } else {
-			// 		world.irecv(0, 0, flag);
-			// 		mpi::wait_all(reqs, reqs + 1);
-			// 	//				vrecv(world, 0, 0, flag);
-			// 	//				world.recv(0, 0, flag);
-			// 	//cout << world.rank() << "    " << flag << endl;
-			// }
+
 			vbroadcast(world, flag, 0);
 
 		}
@@ -252,13 +230,12 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 		compute_objective(w, instance, objective);
 		boost::mpi::reduce(world, objective, objective_world, plus<double>(), 1);
 		objective_world /= world.size();
-		if (world.rank() == 1) 	cout << iter << "   " << objective_world << endl;
+		if (world.rank() == 1) 	cout  << objective_world << endl;
 
 	}
 
 
 }
-//error in computation, check gradient and Hessian, w[i] increases too fast in first iteration.
 
 
 #endif /* DISCOHELPER_H_ */
