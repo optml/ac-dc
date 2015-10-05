@@ -147,10 +147,10 @@ void partitionByFeature(ProblemData<L, D> & part, ProblemData<L, D> & newpart, i
 	if (rank == 2)	{lowerRange = 41; upperRange = 65;}
 	if (rank == 3)	{lowerRange = 66; upperRange = nfeatures - 1;}	
 	// for covtype data
-	if (rank == 0)	{lowerRange = 0; upperRange = 2; }
-	if (rank == 1)	{lowerRange = 3; upperRange = 5;}
-	if (rank == 2)	{lowerRange = 7; upperRange = 9;}
-	if (rank == 3)	{lowerRange = 10; upperRange = nfeatures - 1;}
+	// if (rank == 0)	{lowerRange = 0; upperRange = 2; }
+	// if (rank == 1)	{lowerRange = 3; upperRange = 5;}
+	// if (rank == 2)	{lowerRange = 7; upperRange = 9;}
+	// if (rank == 3)	{lowerRange = 10; upperRange = nfeatures - 1;}
 	newpart.m = upperRange - lowerRange + 1; 
 
 	L nnElements = part.A_csr_col_idx.size(); //cout <<nnElements<<endl;
