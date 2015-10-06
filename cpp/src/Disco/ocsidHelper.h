@@ -26,7 +26,7 @@ void compute_objective(std::vector<double> &w, ProblemData<unsigned int, double>
 
 }
 
-void compute_gradient(std::vector<double> &w, std::vector<double> &grad,
+void compute_gradient(std::vector<double> &w, std::vector<double> &Aw, std::vector<double> &grad,
                       ProblemData<unsigned int, double> &instance) {
 
 	cblas_set_to_zero(grad);
@@ -34,18 +34,16 @@ void compute_gradient(std::vector<double> &w, std::vector<double> &grad,
 	double w_x = 0.0;
 
 	for (unsigned int idx = 0; idx < instance.n; idx++) {
-		w_x = 0.0;
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
-			w_x += w[instance.A_csr_col_idx[i]] * instance.A_csr_values[i];
+			grad[instance.A_csr_col_idx[i]] += 2.0 * instance.A_csr_values[i] / instance.total_n 
+					* (Aw[idx] - instance.b[idx]);
 
-		temp = (w_x - instance.b[idx]) / instance.n;
-		//temp = temp / (1.0 + temp) * (-instance.b[idx]) / instance.total_n;
-		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
-			grad[instance.A_csr_col_idx[i]] += temp * instance.A_csr_values[i];
+	//cout<<instance.A_csr_row_ptr[idx]<<"    ";
 	}
 
-	cblas_daxpy(instance.m, instance.lambda, &w[0], 1, &grad[0], 1);
-
+	for (unsigned int i = 0; i < instance.m; i++){
+		grad[i] += instance.lambda * w[i];
+	}
 }
 
 void computeDataMatrixATimesU(std::vector<double> &w, std::vector<double> &u, std::vector<double> &Au,
@@ -69,13 +67,12 @@ void computeLocalHessianTimesAU(std::vector<double> &w, std::vector<double> &u, 
 
 	for (unsigned int idx = 0; idx < instance.n; idx++) {
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
-			Hu_local[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] * Au[instance.A_csr_col_idx[i]];
+			Hu_local[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] * Au[idx] / instance.n;
 	}
 
-	for (unsigned int i = 0; i < instance.m; i++){
-		Hu_local[i] /= instance.n;
+	for (unsigned int i = 0; i < instance.m; i++)
 		Hu_local[i] += instance.lambda * u[i];
-	}
+	
 
 }
 
@@ -86,6 +83,7 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 	// Compute Matrix P
 	// Broadcastw_k
 	int flag;
+	//std::vector<int> flag(10);
 	//mpi::request reqs[1];
 
 
@@ -99,15 +97,17 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 	std::vector<double> s(instance.m);
 	std::vector<double> r(instance.m);
 	std::vector<double> u(instance.m);
-	std::vector<double> Au_local(instance.m);
+	std::vector<double> Au_local(instance.n);
 	std::vector<double> Au(instance.n);
+	std::vector<double> Aw_local(instance.n);
+	std::vector<double> Aw(instance.n);
 	std::vector<double> Hv_local(instance.m);
 	std::vector<double> Hu_local(instance.m);
 	std::vector<double> local_gradient(instance.m);
-	std::vector<double> constantLocal(5);
-	std::vector<double> constantSum(5);
+	std::vector<double> constantLocal(6);
+	std::vector<double> constantSum(6);
 
-	for (unsigned int iter = 0; iter < 100; iter++) {
+	for (unsigned int iter = 0; iter < 20; iter++) {
 		// Compute local first derivative
 		flag = 1;
 
@@ -115,11 +115,13 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 		cblas_set_to_zero(v);
 		cblas_set_to_zero(Hv_local);
 //		cout<<iter<<endl;
-		compute_gradient(w, local_gradient, instance);
+		computeDataMatrixATimesU(w, w, Aw_local, instance);
 
+		vall_reduce(world, Aw_local, Aw);  
+		compute_gradient(w, Aw, local_gradient, instance);
 		double grad_norm = cblas_l2_norm(instance.m, &local_gradient[0], 1);
 		epsilon = 0.05 * grad_norm * sqrt(instance.lambda / 10.0);
-		//cout << iter << "   " << grad_norm << "    " << epsilon << "   ";
+		cout << iter << "   " << grad_norm << "    " << epsilon << "   "<<endl;
 		if (grad_norm < 1e-8) {
 			cout << endl;
 			break;
@@ -144,7 +146,10 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 
 
 		int inner_iter = 0;
-		while (flag != 0) {
+
+		// can only use this type of iteration now. Any stop or break in one node will interrupt 
+		// the others, there has to be a reduceall operation somehow after that.
+		while (1) { //		while (flag != 0) 
 			computeDataMatrixATimesU(w, u, Au_local, instance);
 			vall_reduce(world, Au_local, Au);  //BUG is here!
 			computeLocalHessianTimesAU(w, u, Au, Hu_local, instance);
@@ -154,9 +159,8 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 			constantLocal[0] = rsLocal;
 			constantLocal[1] = uHuLocal;
 			vall_reduce(world, constantLocal, constantSum);
-
+			//if (rank == 3) cout<<constantLocal[0]<<"    "<<constantSum[0]<<endl;
 			alpha = constantSum[0] / constantSum[1];
-
 			cblas_daxpy(instance.m, alpha, &u[0], 1, &v[0], 1);
 			cblas_daxpy(instance.m, alpha, &Hu_local[0], 1, &Hv_local[0], 1);
 			cblas_daxpy(instance.m, -alpha, &Hu_local[0], 1, &r[0], 1);
@@ -168,33 +172,34 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 			constantLocal[2] = rsNextLocal;
 			vall_reduce(world, constantLocal, constantSum);
 			beta = constantSum[2] / constantSum[0];
-
 			cblas_dscal(instance.m, beta, &u[0], 1);
 			cblas_daxpy(instance.m, 1.0, &s[0], 1, &u[0], 1);
 
-			double r_norm = cblas_l2_norm(instance.m, &r[0], 1);
+			double r_normLocal = cblas_l2_norm(instance.m, &r[0], 1);
+			constantLocal[5] = r_normLocal;
+			vall_reduce(world, constantLocal, constantSum);
 			inner_iter++;
-			if (r_norm <= epsilon || inner_iter > 100) {
+//cout<<constantSum[5]<<endl;
+			if ( inner_iter > 50) {			//	if (r_norm <= epsilon || inner_iter > 100)
 				cblas_dcopy(instance.m, &v[0], 1, &vk[0], 1);
 				double vHvLocal = cblas_ddot(instance.m, &vk[0], 1, &Hv_local[0], 1); //vHvT^(t) or vHvT^(t+1)
 				double vHuLocal = cblas_ddot(instance.m, &vk[0], 1, &Hu_local[0], 1);
 				constantLocal[3] = vHvLocal;
 				constantLocal[4] = vHuLocal;
-				vall_reduce(world, constantLocal, constantSum);
-				deltak = sqrt(constantSum[3] + alpha * constantSum[4]);
 				flag = 0;
+				break;
+				//vall_reduce(world, flag, flagWorld);
 			}
 
-
 		}
-
+		vall_reduce(world, constantLocal, constantSum);
+		deltak = sqrt(constantSum[3] + alpha * constantSum[4]);
 		cblas_daxpy(instance.m, -1.0 / (1.0 + deltak), &vk[0], 1, &w[0], 1);
-
-		double objective = 0.0;
-		double objective_world = 0.0;
-		compute_objective(w, instance, objective);
-		boost::mpi::reduce(world, objective, objective_world, plus<double>(), 1);
-		if (world.rank() == 1) 	cout  << objective_world << endl;
+		// double objective = 0.0;
+		// double objective_world = 0.0;
+		// compute_objective(w, instance, objective);
+		// //boost::mpi::reduce(world, objective, objective_world, plus<double>(), 1);
+		// if (world.rank() == 0) 	cout  << objective << endl;
 
 	}
 

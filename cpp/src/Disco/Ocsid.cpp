@@ -50,7 +50,6 @@ int main(int argc, char *argv[]) {
 	newInstance.total_n = instance.total_n;
 
 
-
 	double rho = 1.0 / newInstance.n;
 	double mu = 0.9;
 
@@ -59,8 +58,6 @@ int main(int argc, char *argv[]) {
 
 	std::vector<double> vk(newInstance.m);
 	double deltak = 0.0;
-
-	//compute_initial_w(w, instance, rho);
 	//for (unsigned int i = 0; i < K; i++){
 	//	update_w(w, vk, deltak);
 	distributed_PCGByD(w, newInstance, mu, vk, deltak, world, world.size(), world.rank());

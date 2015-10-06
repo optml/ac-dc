@@ -142,6 +142,7 @@ void partitionByFeature(ProblemData<L, D> & part, ProblemData<L, D> & newpart, i
 	// }
 
 	// for a1a data
+	//lowerRange = 0; upperRange = nfeatures-1;
 	if (rank == 0)	{lowerRange = 0; upperRange = 20; }
 	if (rank == 1)	{lowerRange = 21; upperRange = 40;}
 	if (rank == 2)	{lowerRange = 41; upperRange = 65;}
@@ -176,8 +177,12 @@ void partitionByFeature(ProblemData<L, D> & part, ProblemData<L, D> & newpart, i
 				newpart.A_csr_row_ptr[rowInd + 1] = nnz;
 				rowInd++;
 			}
-
-		}
+		}		
+	}
+	if (nPartition == 1){
+		rowInd = part.A_csr_row_ptr.size() - 1;
+		for (L i = 0; i <= rowInd; i++)
+			newpart.A_csr_row_ptr[i] = part.A_csr_row_ptr[i];
 	}
 
 	cout<<rank<<"   "<<nnz<<"   "<<part.n<<"   "<<lowerRange<<"   "<<upperRange<<"   "<<newpart.m<<endl;
