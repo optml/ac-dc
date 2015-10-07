@@ -1,0 +1,7 @@
+executable = partition.py
+universe   = vanilla
+output     = partition.out
+error      = partition.err
+log        = partition.log
+
+queue

@@ -37,30 +37,31 @@ int main(int argc, char *argv[]) {
 
 	ProblemData<unsigned int, double> instance;
 	ProblemData<unsigned int, double> newInstance;
-	readWholeData(ctx.matrixAFile, instance, false);
+	//readWholeData(ctx.matrixAFile, instance, false);
+	loadDistributedByFeaturesSVMRowData(ctx.matrixAFile, world.rank(), world.size(), instance, false);
 	
 	unsigned int finalM;
 	vall_reduce_maximum(world, &instance.m, &finalM, 1);  //cout << "Local m " << instance.m << "   global m " << finalM << endl;
 	instance.m = finalM;   //cout << " Local n " << instance.n << endl;
 	vall_reduce(world, &instance.n, &instance.total_n, 1);
 
-	partitionByFeature(instance, newInstance, world.size(), world.rank());
-	newInstance.theta = ctx.tmp;
-	newInstance.lambda = ctx.lambda;
-	newInstance.total_n = instance.total_n;
+	//partitionByFeature(instance, newInstance, world.size(), world.rank());
+	instance.theta = ctx.tmp;
+	instance.lambda = ctx.lambda;
+	//newInstance.total_n = instance.total_n;
 
 
-	double rho = 1.0 / newInstance.n;
+	double rho = 1.0 / instance.total_n;
 	double mu = 0.9;
 
-	std::vector<double> w(newInstance.m);
+	std::vector<double> w(instance.m);
 	//for (unsigned int i = 0; i < instance.m; i++)	w[i] = 0.1*rand() / (RAND_MAX + 0.0);
 
-	std::vector<double> vk(newInstance.m);
+	std::vector<double> vk(instance.m);
 	double deltak = 0.0;
 	//for (unsigned int i = 0; i < K; i++){
 	//	update_w(w, vk, deltak);
-	distributed_PCGByD(w, newInstance, mu, vk, deltak, world, world.size(), world.rank());
+	distributed_PCGByD(w, instance, mu, vk, deltak, world, world.size(), world.rank());
 
 	//}
 	//MPI::Finalize();
