@@ -141,3 +141,12 @@ void CGSolver(std::vector<double> &A, int n,
 
 }
 
+
+void ifIdenticalP(std::vector<double> &A, int n, 
+	std::vector<double> &b, std::vector<double> &x) {
+	
+	for (int i = 0; i < n; i++){
+			x[i] = 1.0 * b[i] / A[i];
+	}
+
+}

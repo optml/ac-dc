@@ -51,8 +51,8 @@ int main(int argc, char *argv[]) {
 	//newInstance.total_n = instance.total_n;
 
 
-	double rho = 1.0 / instance.total_n;
-	double mu = 0.9;
+	double rho = 1.0 / sqrt(instance.n);
+	double mu = 0.1;
 
 	std::vector<double> w(instance.m);
 	//for (unsigned int i = 0; i < instance.m; i++)	w[i] = 0.1*rand() / (RAND_MAX + 0.0);
@@ -61,6 +61,11 @@ int main(int argc, char *argv[]) {
 	double deltak = 0.0;
 	//for (unsigned int i = 0; i < K; i++){
 	//	update_w(w, vk, deltak);
+	if (world.rank() == 0){
+		printf("Computing initial point starts!\n");
+		printf("\n");
+	}
+	compute_initial_w(w, instance, rho, world.rank());
 	distributed_PCGByD(w, instance, mu, vk, deltak, world, world.size(), world.rank());
 
 	//}

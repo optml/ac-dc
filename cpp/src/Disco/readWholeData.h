@@ -151,19 +151,19 @@ int loadDistributedByFeaturesSVMRowData(string inputFile, int file, int totalFil
 		return 0;
 	}
 
-	cout << "Going to process data" << endl;
+	//cout << "Going to process data" << endl;
 
 	part.m = nfeatures;
 	part.n = nsamples;
 
-	cout << "resize nsamples+1 " << nsamples + 1 << endl;
+	//cout << "resize nsamples+1 " << nsamples + 1 << endl;
 	part.A_csr_row_ptr.resize(nsamples + 1);
 	part.A_csr_col_idx.resize(nonzero_elements_of_input_data);
-	cout << "resize nnz " << nonzero_elements_of_input_data << endl;
+	//cout << "resize nnz " << nonzero_elements_of_input_data << endl;
 	part.A_csr_values.resize(nonzero_elements_of_input_data);
-	cout << "resize nnz " << nonzero_elements_of_input_data << endl;
+	//cout << "resize nnz " << nonzero_elements_of_input_data << endl;
 	part.b.resize(nsamples);
-	cout << "resize nsamples " << nsamples << endl;
+	//cout << "resize nsamples " << nsamples << endl;
 	L nnzPossition = 0;
 	L processedSamples = -1;
 
