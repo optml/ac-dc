@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
 	instance.lambda = ctx.lambda;
 	//newInstance.total_n = instance.total_n;
 
+
 	double rho = 1.0 / sqrt(instance.n);
 	double mu = 0.1;
 
