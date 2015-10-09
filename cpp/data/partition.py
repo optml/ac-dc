@@ -50,7 +50,7 @@ def main():
             newword = '%s:%s' % (subIndex[col-1], pair[1])
             linePar[index[col-1]].append(newword)
         for i in range(nPart):
-            output[i].write('%2s ' %listofwords[0])
+            output[i].write('%s ' %listofwords[0])
             output[i].write(" ".join(linePar[i]))
             output[i].write("\n")
 

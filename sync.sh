@@ -17,5 +17,13 @@ LPATH=/work/software/ac-dc
  
 RPATH=/home/mat614/
 
-$RSYNC -avr  $LPATH -e  "$SSH -i $KEY" $RUSER@$RHOST:$RPATH 
+$RSYNC -avr  $LPATH  --exclude data $RUSER@$RHOST:$RPATH 
+
+
+LPATH=/work/software/ac-dc/cpp/data/rcv1_train.binary.8
+
+ 
+RPATH=/home/mat614/ac-dc/cpp/data
+
+$RSYNC -avr  $LPATH    $RUSER@$RHOST:$RPATH 
 

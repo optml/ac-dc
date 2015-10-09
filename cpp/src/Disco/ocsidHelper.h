@@ -238,7 +238,6 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 
 
 void compute_initial_w(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &rho, int rank) {
-
 	std::vector<double> deltaW(instance.m);
 	std::vector<double> deltaAlpha(instance.n);
 	std::vector<double> alpha(instance.n);

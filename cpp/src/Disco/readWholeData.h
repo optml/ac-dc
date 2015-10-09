@@ -1,8 +1,6 @@
 #ifndef READWHOLEDATA_H
 #define READWHOLEDATA_H
 
-
-
 template<typename D, typename L>
 void readWholeData(string inputFile, ProblemData<L, D> & part, bool zeroBased) {
 
@@ -14,8 +12,7 @@ void readWholeData(string inputFile, ProblemData<L, D> & part, bool zeroBased) {
 	stringstream ss;
 	ss << inputFile;
 //	cout << "Going to read data" << endl;
-	parse_LIB_SVM_data_get_size(ss.str().c_str(), nsamples, nfeatures,
-			nonzero_elements_of_input_data);
+	parse_LIB_SVM_data_get_size(ss.str().c_str(), nsamples, nfeatures, nonzero_elements_of_input_data);
 
 //	cout << "Data file contains " << nfeatures << " features, "
 //			<< nsamples << " samples " << "and total "
@@ -40,10 +37,9 @@ void readWholeData(string inputFile, ProblemData<L, D> & part, bool zeroBased) {
 	L nnzPossition = 0;
 	L processedSamples = -1;
 
-		bool foundData =false;
+	bool foundData = false;
 	char* stringBuffer = (char*) malloc(65536);
 	for (L i = 0; i < nsamples; i++) {
-
 
 		char c;
 		L pos = 0;
@@ -51,8 +47,6 @@ void readWholeData(string inputFile, ProblemData<L, D> & part, bool zeroBased) {
 
 		do {
 			c = fgetc(filePtr);
-
-
 
 			//
 			if ((c == ' ') || (c == '\n')) {
@@ -76,7 +70,7 @@ void readWholeData(string inputFile, ProblemData<L, D> & part, bool zeroBased) {
 
 						pos++;
 					}
-				} else  {
+				} else {
 					//Feature found
 					*(bufferPointer) = 0;
 					float value;
@@ -91,7 +85,7 @@ void readWholeData(string inputFile, ProblemData<L, D> & part, bool zeroBased) {
 							part.A_csr_col_idx[nnzPossition] = pos;
 							part.A_csr_values[nnzPossition] = value;
 
-							foundData=false;
+							foundData = false;
 							nnzPossition++;
 						}
 
@@ -105,7 +99,7 @@ void readWholeData(string inputFile, ProblemData<L, D> & part, bool zeroBased) {
 				*(bufferPointer) = 0;
 				int value;
 				sscanf(stringBuffer, "%i", &value);
-				foundData=true;
+				foundData = true;
 				pos = value;
 				bufferPointer = stringBuffer;
 			} else {
@@ -122,13 +116,11 @@ void readWholeData(string inputFile, ProblemData<L, D> & part, bool zeroBased) {
 	fclose(filePtr);
 }
 
-
-
 template<typename D, typename L>
-int loadDistributedByFeaturesSVMRowData(string inputFile, int file, int totalFiles,
-		ProblemData<L, D> & part, bool zeroBased) {
+int loadDistributedByFeaturesSVMRowData(string inputFile, int file, int totalFiles, ProblemData<L, D> & part,
+		bool zeroBased) {
 
-	int nclasses;
+	int nclasses=2;
 	int nsamples;
 	int nfeatures;
 	long long nonzero_elements_of_input_data;
@@ -139,11 +131,9 @@ int loadDistributedByFeaturesSVMRowData(string inputFile, int file, int totalFil
 		ss << "_" << totalFiles << "_" << file;
 	}
 	cout << "Going to parse SVM data" << endl;
-	parse_LIB_SVM_data_get_size(ss.str().c_str(), nsamples, nfeatures,
-			nonzero_elements_of_input_data);
-	cout << "Data file " << file << " contains " << nfeatures << " features, "
-			<< nsamples << " samples " << "and total "
-			<< nonzero_elements_of_input_data << " nnz elements" << endl;
+	parse_LIB_SVM_data_get_size(ss.str().c_str(), nsamples, nfeatures, nonzero_elements_of_input_data);
+	cout << "Data file " << file << " contains " << nfeatures << " features, " << nsamples << " samples "
+			<< "and total " << nonzero_elements_of_input_data << " nnz elements" << endl;
 
 	FILE* filePtr = fopen(ss.str().c_str(), "r");
 	if (filePtr == 0) {
@@ -167,11 +157,9 @@ int loadDistributedByFeaturesSVMRowData(string inputFile, int file, int totalFil
 	L nnzPossition = 0;
 	L processedSamples = -1;
 
-
-	bool foundData =false;
+	bool foundData = false;
 	char* stringBuffer = (char*) malloc(65536);
 	for (L i = 0; i < nsamples; i++) {
-
 
 		char c;
 		L pos = 0;
@@ -179,8 +167,6 @@ int loadDistributedByFeaturesSVMRowData(string inputFile, int file, int totalFil
 
 		do {
 			c = fgetc(filePtr);
-
-
 
 			//
 			if ((c == ' ') || (c == '\n')) {
@@ -199,12 +185,14 @@ int loadDistributedByFeaturesSVMRowData(string inputFile, int file, int totalFil
 
 						processedSamples++;
 						part.b[processedSamples] = ddval; // used for a1a data
+						if (ddval != -1 && ddval != 1)
+							cout << part.b[processedSamples] << endl;
 						//part.b[processedSamples] = (-1.5 + ddval) * 2.0; // used for covtype data
 						part.A_csr_row_ptr[processedSamples] = nnzPossition;
 
 						pos++;
 					}
-				} else  {
+				} else {
 					//Feature found
 					*(bufferPointer) = 0;
 					float value;
@@ -219,7 +207,7 @@ int loadDistributedByFeaturesSVMRowData(string inputFile, int file, int totalFil
 							part.A_csr_col_idx[nnzPossition] = pos;
 							part.A_csr_values[nnzPossition] = value;
 
-							foundData=false;
+							foundData = false;
 							nnzPossition++;
 						}
 
@@ -233,7 +221,7 @@ int loadDistributedByFeaturesSVMRowData(string inputFile, int file, int totalFil
 				*(bufferPointer) = 0;
 				int value;
 				sscanf(stringBuffer, "%i", &value);
-				foundData=true;
+				foundData = true;
 				pos = value;
 				bufferPointer = stringBuffer;
 			} else {
@@ -251,7 +239,6 @@ int loadDistributedByFeaturesSVMRowData(string inputFile, int file, int totalFil
 	return 1;
 }
 
-
 template<typename D, typename L>
 void partitionByFeature(ProblemData<L, D> & part, ProblemData<L, D> & newpart, int nPartition, int rank) {
 
@@ -261,7 +248,7 @@ void partitionByFeature(ProblemData<L, D> & part, ProblemData<L, D> & newpart, i
 	L lowerRange;
 	L upperRange;
 	newpart.n = part.n;
-    newpart.theta = part.theta;
+	newpart.theta = part.theta;
 	// part.m = floor(nfeatures / nPartition);
 	// lowerRange = rank * part.m;
 	// upperRange = (rank + 1) * part.m - 1;
@@ -277,11 +264,23 @@ void partitionByFeature(ProblemData<L, D> & part, ProblemData<L, D> & newpart, i
 	// if (rank == 2)	{lowerRange = 41; upperRange = 65;}
 	// if (rank == 3)	{lowerRange = 66; upperRange = nfeatures - 1;}	
 	//for covtype data
-	if (rank == 0)	{lowerRange = 0; upperRange = 2; }
-	if (rank == 1)	{lowerRange = 3; upperRange = 5;}
-	if (rank == 2)	{lowerRange = 7; upperRange = 9;}
-	if (rank == 3)	{lowerRange = 10; upperRange = nfeatures - 1;}
-	newpart.m = upperRange - lowerRange + 1; 
+	if (rank == 0) {
+		lowerRange = 0;
+		upperRange = 2;
+	}
+	if (rank == 1) {
+		lowerRange = 3;
+		upperRange = 5;
+	}
+	if (rank == 2) {
+		lowerRange = 7;
+		upperRange = 9;
+	}
+	if (rank == 3) {
+		lowerRange = 10;
+		upperRange = nfeatures - 1;
+	}
+	newpart.m = upperRange - lowerRange + 1;
 
 	L nnElements = part.A_csr_col_idx.size(); //cout <<nnElements<<endl;
 	newpart.A_csr_values.resize(nnElements);
@@ -293,32 +292,31 @@ void partitionByFeature(ProblemData<L, D> & part, ProblemData<L, D> & newpart, i
 	L rowInd = 0;
 
 	newpart.A_csr_row_ptr[0] = 0;
-	for (L i = 0; i < nnElements; i++)
-	{
-		if (part.A_csr_col_idx[i] >= lowerRange && part.A_csr_col_idx[i] <= upperRange)
-		{
+	for (L i = 0; i < nnElements; i++) {
+		if (part.A_csr_col_idx[i] >= lowerRange && part.A_csr_col_idx[i] <= upperRange) {
 			newpart.A_csr_values[nnz] = part.A_csr_values[i];
 			newpart.A_csr_col_idx[nnz] = part.A_csr_col_idx[i] - lowerRange;
 			newpart.b[nnz] = part.b[i];				//cout<<rank<<"   "<<part.A_csr_col_idx[i]<<endl;
 			nnz++;
 
-			if( part.A_csr_col_idx[i + 1] > upperRange || part.A_csr_col_idx[i + 1] < lowerRange){
+			if (part.A_csr_col_idx[i + 1] > upperRange || part.A_csr_col_idx[i + 1] < lowerRange) {
 				newpart.A_csr_row_ptr[rowInd + 1] = nnz;
 				rowInd++;
 			}
-		}		
+		}
 	}
-	if (nPartition == 1){
+	if (nPartition == 1) {
 		rowInd = part.A_csr_row_ptr.size() - 1;
 		for (L i = 0; i <= rowInd; i++)
 			newpart.A_csr_row_ptr[i] = part.A_csr_row_ptr[i];
 	}
 
-	cout<<rank<<"   "<<nnz<<"   "<<part.n<<"   "<<lowerRange<<"   "<<upperRange<<"   "<<newpart.m<<endl;
+	cout << rank << "   " << nnz << "   " << part.n << "   " << lowerRange << "   " << upperRange << "   " << newpart.m
+			<< endl;
 
 	newpart.A_csr_values.resize(nnz);
 	newpart.A_csr_col_idx.resize(nnz);
-	newpart.A_csr_row_ptr.resize(rowInd+1);
+	newpart.A_csr_row_ptr.resize(rowInd + 1);
 	newpart.b.resize(nnz);
 
 //	cout << "Data file contains features from " << lowerRange << " to "
@@ -340,23 +338,21 @@ void partitionByFeature_mod(ProblemData<L, D> & part, int nPartition, int rank) 
 
 	L nnElements = part.A_csr_col_idx.size(); //cout <<nnElements<<endl;
 
-	std::vector<D> A_csr_values(nnElements);
-	std::vector<L> A_csr_col_idx(nnElements);
-	std::vector<L> A_csr_row_ptr(nnElements);
-	std::vector<L> b(nnElements);
+	std::vector < D > A_csr_values(nnElements);
+	std::vector < L > A_csr_col_idx(nnElements);
+	std::vector < L > A_csr_row_ptr(nnElements);
+	std::vector < L > b(nnElements);
 	L nnz = 0;
 	L rowInd = 0;
 
 	A_csr_row_ptr[0] = 0;
-	for (L i = 0; i < nnElements; i++)
-	{
-		if ( part.A_csr_col_idx[i] % nPartition == rank )
-		{
+	for (L i = 0; i < nnElements; i++) {
+		if (part.A_csr_col_idx[i] % nPartition == rank) {
 			A_csr_values[nnz] = part.A_csr_values[i];
 			A_csr_col_idx[nnz] = floor(part.A_csr_col_idx[i] / nPartition);
 			b[nnz] = part.b[i];				//cout<<rank<<"   "<<part.A_csr_col_idx[i]<<endl;
 
-			if( part.A_csr_col_idx[i + 1] < part.A_csr_col_idx[i] ){
+			if (part.A_csr_col_idx[i + 1] < part.A_csr_col_idx[i]) {
 				A_csr_row_ptr[rowInd + 1] = nnz;
 				rowInd++;
 			}
@@ -364,11 +360,8 @@ void partitionByFeature_mod(ProblemData<L, D> & part, int nPartition, int rank) 
 
 		}
 	}
-	cout<<rank<<"   "<<nnz<<"   "<<rowInd<<"   "<<part.m<<endl;
+	cout << rank << "   " << nnz << "   " << rowInd << "   " << part.m << endl;
 
 }
-
-
-
 
 #endif
