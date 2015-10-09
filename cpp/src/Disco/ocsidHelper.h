@@ -84,9 +84,9 @@ void compute_gradient(std::vector<double> &w, std::vector<double> &Aw, std::vect
 void computeDataMatrixATimesU(std::vector<double> &w, std::vector<double> &u, std::vector<double> &Au,
                               ProblemData<unsigned int, double> &instance) {
 
-	cblas_set_to_zero(Au);
-
+//	cblas_set_to_zero(Au); <- not necesary as you are updating Au[idx] in a loop sequencially
 	for (unsigned int idx = 0; idx < instance.n; idx++) {
+		Au[idx]=0;
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
 			Au[idx] += instance.A_csr_values[i] * u[instance.A_csr_col_idx[i]];
 	}
@@ -176,7 +176,7 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 			P[instance.m * i + i] += instance.lambda + mu;
 		}
 		// s= p^-1 r
-		CGSolver(P, instance.m, r, s);
+		CGSolver(P, instance.m, r, s); // should be done differently if Square loss is used
 		cblas_dcopy(instance.m, &s[0], 1, &u[0], 1);
 
 
@@ -207,14 +207,14 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 			constantLocal[2] = rsNextLocal;
 			vall_reduce(world, constantLocal, constantSum);
 			beta = constantSum[2] / constantSum[0];
-			cblas_dscal(instance.m, beta, &u[0], 1);
+
+			cblas_dscal(instance.m, beta, &u[0], 1); // FIXME -> put as one for loop, will be faster :)
 			cblas_daxpy(instance.m, 1.0, &s[0], 1, &u[0], 1);
 
 			double r_normLocal = cblas_l2_norm(instance.m, &r[0], 1);
 			constantLocal[5] = r_normLocal;
 			vall_reduce(world, constantLocal, constantSum);
 			inner_iter++;
-//cout<<constantSum[5]<<endl;
 			if ( inner_iter > 20) {			//	if (r_norm <= epsilon || inner_iter > 100)
 				cblas_dcopy(instance.m, &v[0], 1, &vk[0], 1);
 				double vHvLocal = cblas_ddot(instance.m, &vk[0], 1, &Hv_local[0], 1); //vHvT^(t) or vHvT^(t+1)
@@ -230,11 +230,6 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 		vall_reduce(world, constantLocal, constantSum);
 		deltak = sqrt(constantSum[3] + alpha * constantSum[4]);
 		cblas_daxpy(instance.m, -1.0 / (1.0 + deltak), &vk[0], 1, &w[0], 1);
-		// double objective = 0.0;
-		// double objective_world = 0.0;
-		// compute_objective(w, instance, objective);
-		// //boost::mpi::reduce(world, objective, objective_world, plus<double>(), 1);
-		// if (world.rank() == 0) 	cout  << objective << endl;
 
 	}
 

@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 	distributed_PCGByD(w, instance, mu, vk, deltak, world, world.size(), world.rank());
 
 	//}
-	//MPI::Finalize();
+	MPI::Finalize();
 
 	return 0;
 
