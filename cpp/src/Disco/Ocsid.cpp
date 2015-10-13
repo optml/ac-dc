@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 		printf("\n");
 	}
 	compute_initial_w(w, instance, rho, world.rank());
-	distributed_PCGByD(w, instance, mu, vk, deltak, world, world.size(), world.rank());
+	distributed_PCGByD_SparseP(w, instance, mu, vk, deltak, world, world.size(), world.rank());
 
 	//}
 	MPI::Finalize();

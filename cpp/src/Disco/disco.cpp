@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 
 	//compute_initial_w(w, instance, rho);
 	//for (unsigned int i = 0; i < K; i++){
-	distributed_PCG(w, instance, mu, vk, deltak, world);
+	distributed_PCG_SparseP(w, instance, mu, vk, deltak, world);
 	//	update_w(w, vk, deltak);
 	
 	//}

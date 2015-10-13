@@ -142,6 +142,60 @@ void CGSolver(std::vector<double> &A, int n,
 }
 
 
+
+void WoodburySolver(ProblemData<unsigned int, double> &instance, unsigned int &n, unsigned int &batchSize,
+	std::vector<double> &b, std::vector<double> &x, 
+	std::vector<unsigned int> &randPick, double &diag) {
+	
+	std::vector<double> woodburyH(batchSize * batchSize);
+	std::vector<double> woodburyVTy(batchSize);
+	std::vector<double> woodburyHVTy(batchSize);
+	std::vector<double> woodburyZHVTy(n);
+
+	for (unsigned int idx1 = 0; idx1 < batchSize; idx1++){
+		for (unsigned int idx2 = 0; idx2 < batchSize; idx2++){
+			unsigned int i = instance.A_csr_row_ptr[idx1];
+			unsigned int j = instance.A_csr_row_ptr[idx2];
+			while (i < instance.A_csr_row_ptr[idx1+1] && j < instance.A_csr_row_ptr[idx2+1]){
+				if (instance.A_csr_col_idx[i] == instance.A_csr_col_idx[j]){
+					woodburyH[idx1 * batchSize + idx2] += instance.A_csr_values[i] * instance.A_csr_values[j] / diag;
+					i++;
+					j++;
+				}
+				else if (instance.A_csr_col_idx[i] < instance.A_csr_col_idx[j])
+					i++;
+				else
+					j++;
+			}
+		}
+	}
+
+	for (unsigned int idx = 0; idx < batchSize; idx++)
+		woodburyH[idx * batchSize + idx] += 1.0;
+
+	for (unsigned int idx = 0; idx < batchSize; idx++){
+		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++){
+			woodburyVTy[idx] += instance.A_csr_values[i] * b[instance.A_csr_col_idx[i]] / diag;
+		}
+	}
+
+	CGSolver(woodburyH, batchSize, woodburyVTy, woodburyHVTy);
+	
+	for (unsigned int idx = 0; idx < batchSize; idx++){
+		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++){
+			woodburyZHVTy[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] / diag * woodburyHVTy[idx];
+		}
+	}
+
+	for (unsigned int i = 0; i < n; i++){
+		x[i] = b[i] / diag - woodburyZHVTy[i];
+	}
+
+}
+
+
+
+
 void ifIdenticalP(std::vector<double> &A, int n, 
 	std::vector<double> &b, std::vector<double> &x) {
 	

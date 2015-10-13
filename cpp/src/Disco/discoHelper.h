@@ -110,6 +110,131 @@ void computeHessianTimesU(std::vector<double> &w, std::vector<double> &u, std::v
 
 }
 
+
+
+void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &mu,
+                     std::vector<double> &vk, double &deltak, boost::mpi::communicator &world) {
+
+	// Compute Matrix P
+	// Broadcastw_k
+	std::vector<int> flag(1);
+	mpi::request reqs[1];
+
+
+	double epsilon;
+	double grad_norm;
+	double alpha = 0.0;
+	double beta = 0.0;
+	unsigned int batchSize = 100;
+
+	std::vector<double> v(instance.m);
+	std::vector<double> s(instance.m);
+	std::vector<double> r(instance.m);
+	std::vector<double> u(instance.m);
+	std::vector<double> Hu_local(instance.m);
+	std::vector<double> Hu(instance.m);
+	std::vector<double> Hv(instance.m);
+	std::vector<double> gradient(instance.m);
+	std::vector<double> local_gradient(instance.m);
+	std::vector<unsigned int> randPick(batchSize);
+	std::vector<double> woodburyU(instance.m * batchSize);
+	double diag = instance.lambda + mu;
+
+	for (unsigned int iter = 0; iter < 100; iter++) {
+		// Compute local first derivative
+		flag[0] = 1;
+
+		cblas_set_to_zero(v);
+		cblas_set_to_zero(Hv);
+		vbroadcast(world, w, 0);
+//		cout<<iter<<endl;
+		compute_gradient(w, local_gradient, instance);
+//		for (unsigned int i = 0; i < instance.m; i++)			local_gradient[i] = 0.1 * rand() / (RAND_MAX + 0.0);
+		// Aggregates to form f'(w_k)
+		vall_reduce(world, local_gradient, gradient);
+		cblas_dscal(instance.m, 1.0 / world.size(), &gradient[0], 1);
+
+		if (world.rank() == 0) {
+			double grad_norm = cblas_l2_norm(instance.m, &gradient[0], 1);
+			epsilon = 0.05 * grad_norm * sqrt(instance.lambda / 10.0);
+			printf("In %ith iteration, now has the norm of gradient: %E \n", iter, grad_norm);
+			if (grad_norm < 1e-8) {
+				cout << endl;
+				break;
+			}
+
+			cblas_dcopy(instance.m, &gradient[0], 1, &r[0], 1);
+
+
+			for (unsigned int i = 0; i < batchSize; i++)
+				randPick[i] = rand() / (0.0 + RAND_MAX) * instance.n;
+
+			// s= p^-1 r
+			WoodburySolver(instance, instance.m, batchSize, r, s, randPick, diag);
+			cblas_dcopy(instance.m, &s[0], 1, &u[0], 1);
+
+		}
+
+		int inner_iter = 0;
+		while (flag[0] != 0) {
+			vbroadcast(world, u, 0);
+			computeHessianTimesU(w, u, Hu_local, instance); //cout<<world.rank()<<"    "<<Hu_local[0]<<endl;
+			vall_reduce(world, Hu_local, Hu);
+			cblas_dscal(instance.m, 1.0 / world.size(), &Hu[0], 1); //for (unsigned int i = 0; i < instance.m; i++)	cout<<i<<"    "<<Hu_local[i]<<"  "<<Hu[i]<<endl;
+
+			if (world.rank() == 0) {
+				//cout<<"I will do this induvidually!!!!!!!!!!"<<endl;
+				double nom = cblas_ddot(instance.m, &r[0], 1, &s[0], 1);
+				double denom = cblas_ddot(instance.m, &u[0], 1, &Hu[0], 1);
+				alpha = nom / denom;
+
+				cblas_daxpy(instance.m, alpha, &u[0], 1, &v[0], 1);
+				cblas_daxpy(instance.m, alpha, &Hu[0], 1, &Hv[0], 1);
+				cblas_daxpy(instance.m, -alpha, &Hu[0], 1, &r[0], 1);
+
+				// ? solve linear system to get new s
+				//CGSolver(P, instance.m, r, s);
+				WoodburySolver(instance, instance.m, batchSize, r, s, randPick, diag);
+
+				double nom_new = cblas_ddot(instance.m, &r[0], 1, &s[0], 1);
+				beta = nom_new / nom;
+				cblas_dscal(instance.m, beta, &u[0], 1);
+				cblas_daxpy(instance.m, 1.0, &s[0], 1, &u[0], 1);
+
+				double r_norm = cblas_l2_norm(instance.m, &r[0], 1);
+				inner_iter++;
+
+				if (r_norm <= epsilon || inner_iter > 100) {
+					cblas_dcopy(instance.m, &v[0], 1, &vk[0], 1);
+					double vHv = cblas_ddot(instance.m, &vk[0], 1, &Hv[0], 1); //vHvT^(t) or vHvT^(t+1)
+					double vHu = cblas_ddot(instance.m, &vk[0], 1, &Hu[0], 1);
+					deltak = sqrt(vHv + alpha * vHu);
+					flag[0] = 0;
+				}
+			}
+
+			vbroadcast(world, flag, 0);
+
+		}
+
+		if (world.rank() == 0) {
+			cblas_daxpy(instance.m, -1.0 / (1.0 + deltak), &vk[0], 1, &w[0], 1);
+		}
+		vbroadcast(world, w, 0);
+
+		double objective = 0.0;
+		double objective_world = 0.0;
+		compute_objective(w, instance, objective);
+		boost::mpi::reduce(world, objective, objective_world, plus<double>(), 1);
+		objective_world /= world.size();
+		if (world.rank() == 1) 	cout  << objective_world << endl;
+
+	}
+
+
+}
+
+
 void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &mu,
                      std::vector<double> &vk, double &deltak, boost::mpi::communicator &world) {
 
@@ -153,9 +278,9 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 		if (world.rank() == 0) {
 			double grad_norm = cblas_l2_norm(instance.m, &gradient[0], 1);
 			epsilon = 0.05 * grad_norm * sqrt(instance.lambda / 10.0);
-			cout<< iter << "   "<< grad_norm << "    " <<epsilon<<"   ";
-			if (grad_norm < 1e-8){
-				cout<<endl;
+			cout << iter << "   " << grad_norm << "    " << epsilon << "   ";
+			if (grad_norm < 1e-8) {
+				cout << endl;
 				break;
 			}
 
@@ -164,8 +289,8 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 			for (unsigned int idx = 0; idx < instance.n; idx++) {
 				for (unsigned int i = instance.A_csr_row_ptr[idx];	i < instance.A_csr_row_ptr[idx + 1]; i++) {
 					for (unsigned int j = instance.A_csr_row_ptr[idx];	j < instance.A_csr_row_ptr[idx + 1]; j++) {
-						P[instance.m * instance.A_csr_col_idx[i] + instance.A_csr_col_idx[j]] += 
-								instance.A_csr_values[i] * instance.A_csr_values[j] / instance.total_n;
+						P[instance.m * instance.A_csr_col_idx[i] + instance.A_csr_col_idx[j]] +=
+						    instance.A_csr_values[i] * instance.A_csr_values[j] / instance.total_n;
 					}
 				}
 			}
