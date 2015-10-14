@@ -34,7 +34,7 @@ def main():
         count[index[i]] += 1
         subIndex.append(count[index[i]])
    
-    output = [open('data/%s.4/%s_%d_%d' % (name, nPart, i-1), 'w') for i in range(1, nPart + 1)]  
+    output = [open('data/%s.4/%s_%d_%d' % (name, name, nPart, i-1), 'w') for i in range(1, nPart + 1)]  
     f = open('data/%s.4/%s' %(name, name),'rU')
     no = 0
     for line in f:
