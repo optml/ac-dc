@@ -160,6 +160,7 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 			printf("In %ith iteration, now has the norm of gradient: %E \n", iter, grad_norm);
 			if (grad_norm < 1e-8) {
 				cout << endl;
+
 				break;
 			}
 
@@ -227,7 +228,7 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 		compute_objective(w, instance, objective);
 		boost::mpi::reduce(world, objective, objective_world, plus<double>(), 1);
 		objective_world /= world.size();
-		if (world.rank() == 1) 	cout  << objective_world << endl;
+		//if (world.rank() == 1) 	cout  << objective_world << endl;
 
 	}
 
@@ -281,6 +282,7 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 			cout << iter << "   " << grad_norm << "    " << epsilon << "   ";
 			if (grad_norm < 1e-8) {
 				cout << endl;
+				flag[0] = -1;
 				break;
 			}
 
@@ -305,7 +307,7 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 		}
 
 		int inner_iter = 0;
-		while (flag[0] != 0) {
+		while (flag[0] == 1) {
 			vbroadcast(world, u, 0);
 			computeHessianTimesU(w, u, Hu_local, instance); //cout<<world.rank()<<"    "<<Hu_local[0]<<endl;
 			vall_reduce(world, Hu_local, Hu);
@@ -344,6 +346,10 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 			vbroadcast(world, flag, 0);
 
 		}
+
+		vbroadcast(world, flag, 0);
+		if (flag[0] == -1)
+			break;
 
 		if (world.rank() == 0) {
 			cblas_daxpy(instance.m, -1.0 / (1.0 + deltak), &vk[0], 1, &w[0], 1);
