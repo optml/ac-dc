@@ -3,7 +3,7 @@ from math import ceil, floor
 
 def main():
     nPart = 8
-    name = 'rcv1_train.binary'
+    name = 'kdd'
 
     nnlines = 0
     output = [open('data/%s.4/%s.%d.%d' % (name, name, nPart, i-1), 'w') for i in range(1, nPart + 1)]  

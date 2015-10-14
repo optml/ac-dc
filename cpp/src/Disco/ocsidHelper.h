@@ -127,7 +127,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 	double grad_norm;
 	double alpha = 0.0;
 	double beta = 0.0;
-	unsigned int batchSize = 100;
+	unsigned int batchSize = 1000;
 
 	std::vector<double> v(instance.m);
 	std::vector<double> s(instance.m);
@@ -149,7 +149,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 	constantLocal[6] = flag;
 	constantSum[6] = flag;
 
-	for (unsigned int iter = 0; iter < 50; iter++) {
+	for (unsigned int iter = 0; iter < 200; iter++) {
 		// Compute local first derivative
 
 		cblas_set_to_zero(v);
@@ -161,7 +161,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 		compute_gradient(w, Aw, local_gradient, instance);
 		double grad_norm = cblas_l2_norm(instance.m, &local_gradient[0], 1);
 		epsilon = 0.05 * grad_norm * sqrt(instance.lambda / 10.0);
-		printf("In %ith iteration, node %i now has the norm of gradient: %E \n", iter,rank, grad_norm);
+		printf("In %ith iteration, node %i now has the norm of gradient: %E, %E\n", iter,rank, grad_norm, constantLocal[5]);
 		if (grad_norm < 1e-8) {
 			//cout << endl;
 			flag = 0;
@@ -217,7 +217,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 			constantLocal[5] = r_normLocal;
 			vall_reduce(world, constantLocal, constantSum);
 			inner_iter++;
-			if ( inner_iter > 20) {			//	if (r_norm <= epsilon || inner_iter > 100)
+			if ( inner_iter > 30) {			//	if (r_norm <= epsilon || inner_iter > 100)
 				cblas_dcopy(instance.m, &v[0], 1, &vk[0], 1);
 				double vHvLocal = cblas_ddot(instance.m, &vk[0], 1, &Hv_local[0], 1); //vHvT^(t) or vHvT^(t+1)
 				double vHuLocal = cblas_ddot(instance.m, &vk[0], 1, &Hu_local[0], 1);
@@ -377,7 +377,7 @@ void compute_initial_w(std::vector<double> &w, ProblemData<unsigned int, double>
 		Li[idx] = 1.0 / (norm * norm / rho / instance.n + 1.0);
 	}
 
-	for (unsigned int jj = 0; jj < 100; jj++) {
+	for (unsigned int jj = 0; jj < 20; jj++) {
 		cblas_set_to_zero(deltaW);
 		cblas_set_to_zero(deltaAlpha);
 
