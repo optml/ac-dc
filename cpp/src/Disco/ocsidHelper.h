@@ -132,7 +132,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 	double obj;
 	double alpha = 0.0;
 	double beta = 0.0;
-	unsigned int batchSize = 100;
+	unsigned int batchSize = 500;
 
 	std::vector<double> v(instance.m);
 	std::vector<double> s(instance.m);
@@ -154,7 +154,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 	constantLocal[6] = flag;
 	constantSum[6] = flag;	
 
-	for (unsigned int iter = 0; iter < 50; iter++) {
+	for (unsigned int iter = 0; iter < 500; iter++) {
 		// Compute local first derivative
 		start = gettime_();
 		innerflag = 1;
@@ -228,7 +228,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 				break;
 			}
 
-			if ( r_normLocal <= epsilon || inner_iter > 1000) {			//	if (r_norm <= epsilon || inner_iter > 100)
+			if ( r_normLocal <= epsilon || inner_iter > 20) {			//	if (r_norm <= epsilon || inner_iter > 100)
 				cblas_dcopy(instance.m, &v[0], 1, &vk[0], 1);
 				double vHvLocal = cblas_ddot(instance.m, &vk[0], 1, &Hv_local[0], 1); //vHvT^(t) or vHvT^(t+1)
 				double vHuLocal = cblas_ddot(instance.m, &vk[0], 1, &Hu_local[0], 1);
