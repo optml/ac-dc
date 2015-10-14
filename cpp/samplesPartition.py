@@ -6,15 +6,15 @@ def main():
     name = 'rcv1_train.binary'
 
     nnlines = 0
-    output = [open('%s.4/%s.%d.%d' % (name, name, nPart, i-1), 'w') for i in range(1, nPart + 1)]  
-    f = open('%s.4/%s' %(name, name),'rU')
+    output = [open('data/%s.4/%s.%d.%d' % (name, name, nPart, i-1), 'w') for i in range(1, nPart + 1)]  
+    f = open('data/%s.4/%s' %(name, name),'rU')
     for line in f:
         nnlines += 1
 
     nnsamplesPerFile = ceil(nnlines / nPart)+1
 
     count = 0
-    f = open('%s.4/%s' %(name, name),'rU')
+    f = open('data/%s.4/%s' %(name, name),'rU')
     for line in f:
         i = floor(count / nnsamplesPerFile)
         output[int(i)].write(line)

@@ -2,7 +2,7 @@
 def main():
     nPart = 8
     name = 'rcv1_train.binary'
-    f = open('%s' %name,'rU')
+    f = open('data/%s.4/%s' %(name, name),'rU')
 
     dic = {}
     b = []
@@ -34,8 +34,8 @@ def main():
         count[index[i]] += 1
         subIndex.append(count[index[i]])
    
-    output = [open('%s_%d_%d' % (name, nPart, i-1), 'w') for i in range(1, nPart + 1)]  
-    f = open('%s' %name,'rU')
+    output = [open('data/%s.4/%s_%d_%d' % (name, nPart, i-1), 'w') for i in range(1, nPart + 1)]  
+    f = open('data/%s.4/%s' %(name, name),'rU')
     no = 0
     for line in f:
         listofwords = line.split(" ")
@@ -50,7 +50,7 @@ def main():
             newword = '%s:%s' % (subIndex[col-1], pair[1])
             linePar[index[col-1]].append(newword)
         for i in range(nPart):
-            output[i].write('%s ' %listofwords[0])
+            output[i].write('%2s ' %listofwords[0])
             output[i].write(" ".join(linePar[i]))
             output[i].write("\n")
 
