@@ -160,8 +160,7 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 			printf("In %ith iteration, now has the norm of gradient: %E \n", iter, grad_norm);
 			if (grad_norm < 1e-8) {
 				cout << endl;
-
-				break;
+				flag[0] = -1;
 			}
 
 			cblas_dcopy(instance.m, &gradient[0], 1, &r[0], 1);
@@ -229,6 +228,9 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 		boost::mpi::reduce(world, objective, objective_world, plus<double>(), 1);
 		objective_world /= world.size();
 		//if (world.rank() == 1) 	cout  << objective_world << endl;
+		vbroadcast(world, flag, 0);
+		if (flag[0] == -1)
+			break;
 
 	}
 
