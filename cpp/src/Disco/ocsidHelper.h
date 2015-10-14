@@ -147,6 +147,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 
 	flag = 1;
 	constantLocal[6] = flag;
+	constantSum[6] = flag;
 
 	for (unsigned int iter = 0; iter < 50; iter++) {
 		// Compute local first derivative
