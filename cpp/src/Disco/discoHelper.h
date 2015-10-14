@@ -113,16 +113,19 @@ void computeHessianTimesU(std::vector<double> &w, std::vector<double> &u, std::v
 
 
 void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &mu,
-                     std::vector<double> &vk, double &deltak, boost::mpi::communicator &world) {
+                     std::vector<double> &vk, double &deltak, boost::mpi::communicator &world, std::ofstream &logFile) {
 
 	// Compute Matrix P
 	// Broadcastw_k
 	std::vector<int> flag(2);
 	mpi::request reqs[1];
 
+	double start = 0;
+	double finish = 0;
+	double elapsedTime = 0;
+	double grad_norm;
 
 	double epsilon;
-	double grad_norm;
 	double alpha = 0.0;
 	double beta = 0.0;
 	unsigned int batchSize = 100;
@@ -142,6 +145,8 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 
 	for (unsigned int iter = 0; iter < 100; iter++) {
 		// Compute local first derivative
+		start = gettime_();
+
 		flag[0] = 1;
 		flag[1] = 1;
 
@@ -156,7 +161,7 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 		cblas_dscal(instance.m, 1.0 / world.size(), &gradient[0], 1);
 
 		if (world.rank() == 0) {
-			double grad_norm = cblas_l2_norm(instance.m, &gradient[0], 1);
+			grad_norm = cblas_l2_norm(instance.m, &gradient[0], 1);
 			epsilon = 0.05 * grad_norm * sqrt(instance.lambda / 10.0);
 			printf("In %ith iteration, now has the norm of gradient: %E \n", iter, grad_norm);
 			if (grad_norm < 1e-8) {
@@ -229,8 +234,15 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 		boost::mpi::reduce(world, objective, objective_world, plus<double>(), 1);
 		objective_world /= world.size();
 		//if (world.rank() == 1) 	cout  << objective_world << endl;
+		finish = gettime_();
+		elapsedTime += finish - start;
+
+		if (world.rank() == 0) {
+		logFile << iter << "," << elapsedTime << "," << objective << "," << grad_norm<<endl;
+		}
 		if (flag[1] == 0)
 			break;
+
 
 	}
 
@@ -239,7 +251,7 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 
 
 void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &mu,
-                     std::vector<double> &vk, double &deltak, boost::mpi::communicator &world) {
+                     std::vector<double> &vk, double &deltak, boost::mpi::communicator &world, std::ofstream &logFile) {
 
 	// Compute Matrix P
 	// Broadcastw_k

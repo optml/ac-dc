@@ -56,9 +56,15 @@ int main(int argc, char *argv[]) {
 
 	std::vector<double> w(instance.m);
 	//for (unsigned int i = 0; i < instance.m; i++)	w[i] = 0.1*rand() / (RAND_MAX + 0.0);
-
 	std::vector<double> vk(instance.m);
 	double deltak = 0.0;
+
+	std::stringstream ss;
+	ss << ctx.matrixAFile << "_ParFea_" << world.size() << ".log";
+	std::ofstream logFile;
+	logFile.open(ss.str().c_str());
+	
+
 	//for (unsigned int i = 0; i < K; i++){
 	//	update_w(w, vk, deltak);
 	if (world.rank() == 0){
@@ -66,9 +72,10 @@ int main(int argc, char *argv[]) {
 		printf("\n");
 	}
 	compute_initial_w(w, instance, rho, world.rank());
-	distributed_PCGByD_SparseP(w, instance, mu, vk, deltak, world, world.size(), world.rank());
+	distributed_PCGByD_SparseP(w, instance, mu, vk, deltak, world, world.size(), world.rank(), logFile);
 
 	//}
+	logFile.close();
 	MPI::Finalize();
 
 	return 0;

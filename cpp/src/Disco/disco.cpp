@@ -61,15 +61,21 @@ int main(int argc, char *argv[]) {
 
 	std::vector<double> vk(instance.m);
 	double deltak = 0.0;
-
+	
+	std::stringstream ss;
+	ss << ctx.matrixAFile << "_ParSam_" << world.size() << ".log";
+	std::ofstream logFile;
+	logFile.open(ss.str().c_str());
+	
 	//compute_initial_w(w, instance, rho);
 	//for (unsigned int i = 0; i < K; i++){
-	distributed_PCG_SparseP(w, instance, mu, vk, deltak, world);
+	distributed_PCG_SparseP(w, instance, mu, vk, deltak, world, logFile);
 	//	update_w(w, vk, deltak);
 	
 	//}
 	ProblemData<unsigned int, double> instance2;
 	//MPI::Finalize();
+	logFile.close();
 
 	return 0;
 
