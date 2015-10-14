@@ -140,14 +140,16 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 	std::vector<double> Hv_local(instance.m);
 	std::vector<double> Hu_local(instance.m);
 	std::vector<double> local_gradient(instance.m);
-	std::vector<double> constantLocal(6);
-	std::vector<double> constantSum(6);
+	std::vector<double> constantLocal(7);
+	std::vector<double> constantSum(7);
 	std::vector<unsigned int> randPick(batchSize);
 	std::vector<double> woodburyU(instance.m * batchSize);
 
+	flag = 1;
+	constantLocal[6] = flag;
+
 	for (unsigned int iter = 0; iter < 50; iter++) {
 		// Compute local first derivative
-		flag = 1;
 
 		cblas_set_to_zero(v);
 		cblas_set_to_zero(Hv_local);
@@ -161,6 +163,10 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 		printf("In %ith iteration, node %i now has the norm of gradient: %E \n", iter,rank, grad_norm);
 		if (grad_norm < 1e-8) {
 			cout << endl;
+			flag = 0;
+			constantLocal[6] = flag;
+		}
+		if (constantSum[6] == 0){
 			break;
 		}
 
@@ -216,7 +222,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 				double vHuLocal = cblas_ddot(instance.m, &vk[0], 1, &Hu_local[0], 1);
 				constantLocal[3] = vHvLocal;
 				constantLocal[4] = vHuLocal;
-				flag = 0;
+				//flag = 0;
 				break;
 				//vall_reduce(world, flag, flagWorld);
 			}
