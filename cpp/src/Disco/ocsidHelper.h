@@ -163,7 +163,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 		epsilon = 0.05 * grad_norm * sqrt(instance.lambda / 10.0);
 		printf("In %ith iteration, node %i now has the norm of gradient: %E \n", iter,rank, grad_norm);
 		if (grad_norm < 1e-8) {
-			cout << endl;
+			//cout << endl;
 			flag = 0;
 			constantLocal[6] = flag;
 		}

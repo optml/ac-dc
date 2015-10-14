@@ -283,7 +283,6 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 			if (grad_norm < 1e-8) {
 				cout << endl;
 				flag[0] = -1;
-				break;
 			}
 
 			cblas_dcopy(instance.m, &gradient[0], 1, &r[0], 1);
