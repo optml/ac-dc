@@ -76,15 +76,14 @@ void compute_gradient(std::vector<double> &w, std::vector<double> &Aw, std::vect
 
 	for (unsigned int idx = 0; idx < instance.n; idx++) {
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
-			grad[instance.A_csr_col_idx[i]] += 2.0 * instance.A_csr_values[i] / instance.total_n
+			grad[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] / instance.total_n
 			                                   * (Aw[idx] - instance.b[idx]);
 
 		//cout<<instance.A_csr_row_ptr[idx]<<"    ";
 	}
 
-	for (unsigned int i = 0; i < instance.m; i++) {
-		grad[i] += instance.lambda * w[i];
-	}
+	cblas_daxpy(instance.m, instance.lambda, &w[0], 1, &grad[0], 1);
+
 }
 
 void computeDataMatrixATimesU(std::vector<double> &w, std::vector<double> &u, std::vector<double> &Au,
@@ -407,7 +406,7 @@ void compute_initial_w(std::vector<double> &w, ProblemData<unsigned int, double>
 		Li[idx] = 1.0 / (norm * norm / rho / instance.n + 1.0);
 	}
 
-	for (unsigned int jj = 0; jj < 100; jj++) {
+	for (unsigned int jj = 0; jj < 10; jj++) {
 		cblas_set_to_zero(deltaW);
 		cblas_set_to_zero(deltaAlpha);
 

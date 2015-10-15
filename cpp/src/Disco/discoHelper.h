@@ -455,7 +455,7 @@ void compute_initial_w(std::vector<double> &w, ProblemData<unsigned int, double>
 		Li[idx] = 1.0 / (norm * norm / rho / instance.n + 1.0);
 	}
 
-	for (unsigned int jj = 0; jj < 100; jj++) {
+	for (unsigned int jj = 0; jj < 10; jj++) {
 		cblas_set_to_zero(deltaW);
 		cblas_set_to_zero(deltaAlpha);
 
