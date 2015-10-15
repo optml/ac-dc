@@ -41,10 +41,7 @@ int main(int argc, char *argv[]) {
 	loadDistributedByFeaturesSVMRowData(ctx.matrixAFile, world.rank(), world.size(), instance, false);
 	
 	unsigned int finalM;
-	vall_reduce_maximum(world, &instance.m, &finalM, 1);  //cout << "Local m " << instance.m << "   global m " << finalM << endl;
-	instance.m = finalM;   //cout << " Local n " << instance.n << endl;
-	vall_reduce(world, &instance.n, &instance.total_n, 1);
-
+	instance.total_n = instance.n;
 	//partitionByFeature(instance, newInstance, world.size(), world.rank());
 	instance.theta = ctx.tmp;
 	instance.lambda = ctx.lambda;

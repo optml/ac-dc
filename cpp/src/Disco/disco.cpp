@@ -69,11 +69,12 @@ int main(int argc, char *argv[]) {
 	
 	//compute_initial_w(w, instance, rho);
 	//for (unsigned int i = 0; i < K; i++){
+	if (world.rank() == 0) {
+		compute_initial_w(w, instance, rho, world.rank());
+	}
 	distributed_PCG_SparseP(w, instance, mu, vk, deltak, world, logFile);
 	//	update_w(w, vk, deltak);
-	
 	//}
-	ProblemData<unsigned int, double> instance2;
 	//MPI::Finalize();
 	logFile.close();
 

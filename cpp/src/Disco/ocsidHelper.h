@@ -8,21 +8,27 @@
 #include "QR_solver.h"
 
 
-void compute_objective(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &obj) {
+void compute_objective(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &obj, 
+								boost::mpi::communicator &world) {
 
 	obj = 0.0;
+	std::vector<double> w_x(instance.n + 1);
+	std::vector<double> w_x_world(instance.n + 1);
+
+	w_x[instance.n] = cblas_l2_norm(w.size(), &w[0], 1) * cblas_l2_norm(w.size(), &w[0], 1);
 
 	for (unsigned int idx = 0; idx < instance.n; idx++) {
-
-		double w_x = 0.0;
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
-			w_x += w[instance.A_csr_col_idx[i]] * instance.A_csr_values[i];
+			w_x[idx] += w[instance.A_csr_col_idx[i]] * instance.A_csr_values[i];
+	}
+	vall_reduce(world, w_x, w_x_world);
 
-		obj += 0.5 * (w_x - instance.b[idx]) * (w_x - instance.b[idx]);
+	for (unsigned int idx = 0; idx < instance.n; idx++) {
+		obj += 0.5 * (w_x_world[idx] - instance.b[idx]) * (w_x_world[idx] - instance.b[idx]);
 		//obj += log(1.0 + exp(-1.0 * instance.b[idx] * w_x));
 	}
 
-	obj = 1.0 / instance.n * obj + 0.5 * instance.lambda * cblas_l2_norm(w.size(), &w[0], 1);
+	obj = 1.0 / instance.n * obj + 0.5 * instance.lambda * w_x_world[instance.n];
 
 }
 
@@ -132,7 +138,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 	double obj;
 	double alpha = 0.0;
 	double beta = 0.0;
-	unsigned int batchSize = 500;
+	unsigned int batchSize = 100;
 
 	std::vector<double> v(instance.m);
 	std::vector<double> s(instance.m);
@@ -169,16 +175,18 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 		vall_reduce(world, Aw_local, Aw);
 		compute_gradient(w, Aw, local_gradient, instance);
 		grad_norm = cblas_l2_norm(instance.m, &local_gradient[0], 1);
+		constantLocal[6] = grad_norm;
+		vall_reduce(world, constantLocal, constantSum);
 		epsilon = 0.05 * grad_norm * sqrt(instance.lambda / 10.0);
-		printf("In %ith iteration, node %i now has the norm of gradient: %E \n", iter, rank, grad_norm);
-		if (grad_norm < 1e-7) {
+		//printf("In %ith iteration, node %i now has the norm of gradient: %E \n", iter, rank, grad_norm);
+		if (constantSum[6] < 1e-8) {
 			//cout << endl;
-			flag = 0;
-			constantLocal[6] = flag;
-		}
-		if (constantSum[6] == 0) {
+			//flag = 0;
+			//constantLocal[6] = flag;
 			break;
 		}
+		//if (constantSum[6] == 0) 	break;
+		
 
 		cblas_dcopy(instance.m, &local_gradient[0], 1, &r[0], 1);
 
@@ -196,7 +204,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 		// the others, there has to be a reduceall operation somehow after that.
 		while (1) { //		while (flag != 0)
 			computeDataMatrixATimesU(w, u, Au_local, instance);
-			vall_reduce(world, Au_local, Au);  //BUG is here!
+			vall_reduce(world, Au_local, Au);  
 			computeLocalHessianTimesAU(w, u, Au, Hu_local, instance);
 
 			double rsLocal = cblas_ddot(instance.m, &r[0], 1, &s[0], 1);
@@ -225,10 +233,10 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 			double r_normLocal = cblas_l2_norm(instance.m, &r[0], 1);
 			inner_iter++;
 			if (constantSum[5] == 0){
-				break;
+				break; // stop if all the inner flag = 0.
 			}
 
-			if ( r_normLocal <= epsilon || inner_iter > 20) {			//	if (r_norm <= epsilon || inner_iter > 100)
+			if ( r_normLocal <= epsilon || inner_iter > 100) {			//	if (r_norm <= epsilon || inner_iter > 100)
 				cblas_dcopy(instance.m, &v[0], 1, &vk[0], 1);
 				double vHvLocal = cblas_ddot(instance.m, &vk[0], 1, &Hv_local[0], 1); //vHvT^(t) or vHvT^(t+1)
 				double vHuLocal = cblas_ddot(instance.m, &vk[0], 1, &Hu_local[0], 1);
@@ -247,12 +255,13 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 		finish = gettime_();
 		elapsedTime += finish - start;
 
-		compute_objective(w, instance, obj);
-		constantLocal[7] = obj;
-		vall_reduce(world, constantLocal, constantSum);
+		compute_objective(w, instance, obj, world);
+		//constantLocal[7] = obj; vall_reduce(world, constantLocal, constantSum);
 
 		if (rank == 0) {
-			logFile << iter << "," << elapsedTime << "," << constantSum[7] << ","<<grad_norm<<endl;
+			printf("%ith runs %i CG iterations, the norm of gradient is %E, the objective value is %E\n", 
+									iter, inner_iter, constantSum[6], obj);
+			logFile << iter << "," << elapsedTime << "," << constantSum[6] << ","<<obj<<endl;
 		}
 	}
 

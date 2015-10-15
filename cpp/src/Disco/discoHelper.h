@@ -6,17 +6,9 @@
 #ifndef DISCOHELPER_H_
 #define DISCOHELPER_H_
 
-void compute_initial_w(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &rho) {
 
 
-
-}
-
-void update_w(std::vector<double> &w, std::vector<double> &vk, double &deltak) {
-
-}
-
-void compute_objective(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &obj) {
+void compute_objective(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &obj, int nPartition) {
 
 	obj = 0.0;
 
@@ -30,9 +22,45 @@ void compute_objective(std::vector<double> &w, ProblemData<unsigned int, double>
 		//obj += log(1.0 + exp(-1.0 * instance.b[idx] * w_x));
 	}
 
-	obj = 1.0 / instance.n * obj + 0.5 * instance.lambda * cblas_l2_norm(w.size(), &w[0], 1);
+	obj = 1.0 / instance.total_n * obj + 0.5 * instance.lambda * cblas_l2_norm(w.size(), &w[0], 1) 
+						* cblas_l2_norm(w.size(), &w[0], 1)/ nPartition;
 
 }
+
+void computePrimalAndDualObjectiveValue(ProblemData<unsigned int, double> &instance,
+                                        std::vector<double> &alpha, std::vector<double> &w, double &rho, double &finalDualError,
+                                        double &finalPrimalError) {
+
+	double localError = 0.0;
+	for (unsigned int i = 0; i < instance.n; i++) {
+		double tmp = alpha[i] * alpha[i] * 0.5 - instance.b[i] * alpha[i];
+		localError += tmp;
+	}
+
+	double localQuadLoss = 0.0;
+	for (unsigned int idx = 0; idx < instance.n; idx++) {
+		double dotProduct = 0.0;
+		for (unsigned int i = instance.A_csr_row_ptr[idx];
+		        i < instance.A_csr_row_ptr[idx + 1]; i++) {
+			dotProduct += w[instance.A_csr_col_idx[i]] * instance.A_csr_values[i];
+		}
+		double single = 1.0 * instance.b[idx] -  dotProduct * instance.b[idx];
+		double tmp = 0.5 * single * single;
+
+		localQuadLoss += tmp;
+	}
+
+	finalPrimalError = 0;
+	finalDualError = 0;
+
+	double tmp2 = cblas_l2_norm(instance.m, &w[0], 1);
+	finalDualError = 1.0 / instance.n * localError
+	                 + 0.5 * rho * tmp2 * tmp2;
+	finalPrimalError =  1.0 / instance.n * localQuadLoss
+	                    + 0.5 * rho * tmp2 * tmp2;
+
+}
+
 
 void compute_gradient(std::vector<double> &w, std::vector<double> &grad,
                       ProblemData<unsigned int, double> &instance) {
@@ -110,6 +138,34 @@ void computeHessianTimesU(std::vector<double> &w, std::vector<double> &u, std::v
 
 }
 
+void computeDataMatrixATimesU(std::vector<double> &w, std::vector<double> &u, std::vector<double> &Au,
+                              ProblemData<unsigned int, double> &instance) {
+
+//	cblas_set_to_zero(Au); <- not necesary as you are updating Au[idx] in a loop sequencially
+	for (unsigned int idx = 0; idx < instance.n; idx++) {
+		Au[idx] = 0;
+		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
+			Au[idx] += instance.A_csr_values[i] * u[instance.A_csr_col_idx[i]];
+	}
+
+
+}
+
+void computeLocalHessianTimesAU(std::vector<double> &w, std::vector<double> &u, std::vector<double> &Au,
+                                std::vector<double> &Hu_local, ProblemData<unsigned int, double> &instance) {
+
+	cblas_set_to_zero(Hu_local);
+
+	for (unsigned int idx = 0; idx < instance.n; idx++) {
+		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
+			Hu_local[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] * Au[idx] / instance.n;
+	}
+
+	for (unsigned int i = 0; i < instance.m; i++)
+		Hu_local[i] += instance.lambda * u[i];
+
+
+}
 
 
 void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &mu,
@@ -134,6 +190,7 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 	std::vector<double> s(instance.m);
 	std::vector<double> r(instance.m);
 	std::vector<double> u(instance.m);
+	std::vector<double> Au(instance.n);
 	std::vector<double> Hu_local(instance.m);
 	std::vector<double> Hu(instance.m);
 	std::vector<double> Hv(instance.m);
@@ -163,9 +220,8 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 		if (world.rank() == 0) {
 			grad_norm = cblas_l2_norm(instance.m, &gradient[0], 1);
 			epsilon = 0.05 * grad_norm * sqrt(instance.lambda / 10.0);
-			printf("In %ith iteration, now has the norm of gradient: %E \n", iter, grad_norm);
+			//printf("In %ith iteration, now has the norm of gradient: %E \n", iter, grad_norm);
 			if (grad_norm < 1e-8) {
-				cout << endl;
 				flag[1] = 0;
 			}
 
@@ -184,7 +240,9 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 		int inner_iter = 0;
 		while (flag[0] != 0) {
 			vbroadcast(world, u, 0);
-			computeHessianTimesU(w, u, Hu_local, instance); //cout<<world.rank()<<"    "<<Hu_local[0]<<endl;
+			computeDataMatrixATimesU(w, u, Au, instance);
+			computeLocalHessianTimesAU(w, u, Au, Hu_local, instance);
+			//computeHessianTimesU(w, u, Hu_local, instance); //cout<<world.rank()<<"    "<<Hu_local[0]<<endl;
 			vall_reduce(world, Hu_local, Hu);
 			cblas_dscal(instance.m, 1.0 / world.size(), &Hu[0], 1); //for (unsigned int i = 0; i < instance.m; i++)	cout<<i<<"    "<<Hu_local[i]<<"  "<<Hu[i]<<endl;
 
@@ -228,17 +286,21 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 		}
 		vbroadcast(world, w, 0);
 
-		double objective = 0.0;
-		double objective_world = 0.0;
-		compute_objective(w, instance, objective);
-		boost::mpi::reduce(world, objective, objective_world, plus<double>(), 1);
-		objective_world /= world.size();
-		//if (world.rank() == 1) 	cout  << objective_world << endl;
 		finish = gettime_();
 		elapsedTime += finish - start;
 
+		std::vector<double> objective(2);
+		std::vector<double> objective_world(2);
+		compute_objective(w, instance, objective[0], world.size());
+		//boost::mpi::reduce(world, objective, objective_world, plus<double>(), 1);
+		vall_reduce(world, objective, objective_world);
+		//objective_world /= world.size();
+		//if (world.rank() == 1) 	cout  << objective_world << endl;
+
 		if (world.rank() == 0) {
-		logFile << iter << "," << elapsedTime << "," << objective << "," << grad_norm<<endl;
+		printf("%ith runs %i CG iterations, the norm of gradient is %E, the objective value is %E\n",
+												 iter, inner_iter, grad_norm, objective_world[0]);
+		logFile << iter << "," << elapsedTime << "," << grad_norm << "," << objective_world[0]<<endl;
 		}
 		if (flag[1] == 0)
 			break;
@@ -371,7 +433,7 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 
 		double objective = 0.0;
 		double objective_world = 0.0;
-		compute_objective(w, instance, objective);
+		compute_objective(w, instance, objective, world.size());
 		boost::mpi::reduce(world, objective, objective_world, plus<double>(), 1);
 		objective_world /= world.size();
 		if (world.rank() == 1) 	cout  << objective_world << endl;
@@ -381,5 +443,49 @@ void distributed_PCG(std::vector<double> &w, ProblemData<unsigned int, double> &
 
 }
 
+
+void compute_initial_w(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &rho, int rank) {
+	std::vector<double> deltaW(instance.m);
+	std::vector<double> deltaAlpha(instance.n);
+	std::vector<double> alpha(instance.n);
+	std::vector<double> Li(instance.n);
+	for (unsigned int idx = 0; idx < instance.n; idx++) {
+		double norm = cblas_l2_norm(instance.A_csr_row_ptr[idx + 1] - instance.A_csr_row_ptr[idx],
+		                            &instance.A_csr_values[instance.A_csr_row_ptr[idx]], 1);
+		Li[idx] = 1.0 / (norm * norm / rho / instance.n + 1.0);
+	}
+
+	for (unsigned int jj = 0; jj < 100; jj++) {
+		cblas_set_to_zero(deltaW);
+		cblas_set_to_zero(deltaAlpha);
+
+		for (unsigned int it = 0; it < floor(instance.n / 10); it++) {
+			unsigned int idx = rand() / (0.0 + RAND_MAX) * instance.n;
+
+			double dotProduct = 0;
+			for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++) {
+				dotProduct += (w[instance.A_csr_col_idx[i]]
+				               + 1.0 * deltaW[instance.A_csr_col_idx[i]])
+				              * instance.A_csr_values[i];
+			}
+			double alphaI = alpha[idx] + deltaAlpha[idx];
+			double deltaAl = 0;
+			deltaAl = (1.0 * instance.b[idx] - alphaI - dotProduct * instance.b[idx]) * Li[idx];
+			deltaAlpha[idx] += deltaAl;
+			for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
+				deltaW[instance.A_csr_col_idx[i]] += 1.0 / instance.n / rho * deltaAl
+				                                     * instance.A_csr_values[i] * instance.b[idx];
+
+		}
+		cblas_daxpy(instance.m, 1.0, &deltaW[0], 1, &w[0], 1);
+		cblas_daxpy(instance.n, 1.0, &deltaAlpha[0], 1, &alpha[0], 1);
+	}
+	double primalError;
+	double dualError;
+
+	computePrimalAndDualObjectiveValue(instance, alpha, w, rho, dualError, primalError);
+	printf("No. %i node now has the duality gap %E \n", rank, primalError + dualError);
+
+}
 
 #endif /* DISCOHELPER_H_ */
