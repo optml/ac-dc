@@ -178,12 +178,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 		vall_reduce(world, constantLocal, constantSum);
 		epsilon = 0.05 * grad_norm * sqrt(instance.lambda / 10.0);
 		//printf("In %ith iteration, node %i now has the norm of gradient: %E \n", iter, rank, grad_norm);
-		if (constantSum[6] < 1e-8) {
-			//cout << endl;
-			//flag = 0;
-			//constantLocal[6] = flag;
-			break;
-		}
+
 		//if (constantSum[6] == 0) 	break;
 		
 
@@ -261,6 +256,12 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 			printf("%ith runs %i CG iterations, the norm of gradient is %E, the objective value is %E\n", 
 									iter, inner_iter, constantSum[6], obj);
 			logFile << iter << "," << elapsedTime << "," << constantSum[6] << ","<<obj<<endl;
+		}
+		if (constantSum[6] < 1e-8) {
+			//cout << endl;
+			//flag = 0;
+			//constantLocal[6] = flag;
+			break;
 		}
 	}
 
