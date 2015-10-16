@@ -128,6 +128,10 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 	int innerflag;
 	//std::vector<int> flag(10);
 	//mpi::request reqs[1];
+
+	double difference;
+	double objPre;
+
 	double start = 0;
 	double finish = 0;
 	double elapsedTime = 0;
@@ -139,6 +143,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 	double beta = 0.0;
 	unsigned int batchSize = 100;
 
+	std::vector<double> P(instance.m);
 	std::vector<double> v(instance.m);
 	std::vector<double> s(instance.m);
 	std::vector<double> r(instance.m);
@@ -191,7 +196,18 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 		double diag = instance.lambda + mu;
 		// s= p^-1 r
 		WoodburySolver(instance, instance.m, batchSize, r, s, randPick, diag);
-
+		// for (unsigned int idx = 0; idx < instance.n; idx++) {
+		// 	for (unsigned int i = instance.A_csr_row_ptr[idx];	i < instance.A_csr_row_ptr[idx + 1]; i++) {
+		// 			P[instance.A_csr_col_idx[i]] +=
+		// 			    instance.A_csr_values[i] * instance.A_csr_values[i] / instance.total_n;
+		// 	}
+		// }
+		// for (unsigned int i = 0; i < instance.m; i++) {
+		// 	P[i] += instance.lambda + mu;
+		// }		
+		// for (unsigned int i = 0; i < instance.m; i++) {
+		// 	s[i] = r[i]/P[i];
+		// }	
 		cblas_dcopy(instance.m, &s[0], 1, &u[0], 1);
 		int inner_iter = 0;
 		// can only use this type of iteration now. Any stop or break in one node will interrupt
@@ -215,7 +231,8 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 			// ? solve linear system to get new s
 			//CGSolver(P, instance.m, r, s);
 			WoodburySolver(instance, instance.m, batchSize, r, s, randPick, diag);
-
+			//for (unsigned int i = 0; i < instance.m; i++) 	s[i] = r[i]/P[i];
+	
 			double rsNextLocal = cblas_ddot(instance.m, &r[0], 1, &s[0], 1);
 			constantLocal[2] = rsNextLocal;
 			vall_reduce(world, constantLocal, constantSum);
@@ -253,10 +270,13 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 		//constantLocal[7] = obj; vall_reduce(world, constantLocal, constantSum);
 
 		if (rank == 0) {
-			printf("%ith runs %i CG iterations, the norm of gradient is %E, the objective value is %E\n", 
-									iter, inner_iter, constantSum[6], obj);
-			logFile << iter << "," << elapsedTime << "," << constantSum[6] << ","<<obj<<endl;
+			difference = abs(obj - objPre) / obj;
+			printf("%ith runs %i CG iterations, the norm of gradient is %E, the objective gap is %E\n", 
+									iter, inner_iter, constantSum[6], difference);
+			logFile << iter << "," << elapsedTime << "," << constantSum[6] << ","<<difference<<endl;
 		}
+		objPre = obj;
+
 		if (constantSum[6] < 1e-8) {
 			//cout << endl;
 			//flag = 0;
@@ -277,12 +297,20 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 	// Compute Matrix P
 	// Broadcastw_k
 	int flag;
+	int innerflag;
 	//std::vector<int> flag(10);
 	//mpi::request reqs[1];
 
+	double difference;
+	double objPre;
+
+	double start = 0;
+	double finish = 0;
+	double elapsedTime = 0;
+	double grad_norm;
 
 	double epsilon;
-	double grad_norm;
+	double obj;
 	double alpha = 0.0;
 	double beta = 0.0;
 
@@ -298,12 +326,18 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 	std::vector<double> Hv_local(instance.m);
 	std::vector<double> Hu_local(instance.m);
 	std::vector<double> local_gradient(instance.m);
-	std::vector<double> constantLocal(6);
-	std::vector<double> constantSum(6);
+	std::vector<double> constantLocal(8);
+	std::vector<double> constantSum(8);
 
-	for (unsigned int iter = 0; iter < 50; iter++) {
+
+	flag = 1;
+	constantLocal[6] = flag;
+	constantSum[6] = flag;	
+	for (unsigned int iter = 0; iter < 500; iter++) {
 		// Compute local first derivative
-		flag = 1;
+		innerflag = 1;
+		constantLocal[5] = innerflag;
+		constantSum[5] = innerflag * nPartition;
 
 		cblas_set_to_zero(P);
 		cblas_set_to_zero(v);
@@ -314,12 +348,10 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 		vall_reduce(world, Aw_local, Aw);
 		compute_gradient(w, Aw, local_gradient, instance);
 		double grad_norm = cblas_l2_norm(instance.m, &local_gradient[0], 1);
+		constantLocal[6] = grad_norm;
+		vall_reduce(world, constantLocal, constantSum);
 		epsilon = 0.05 * grad_norm * sqrt(instance.lambda / 10.0);
-		printf("In %ith iteration, node %i now has the norm of gradient: %E \n", iter, rank, grad_norm);
-		if (grad_norm < 1e-8) {
-			cout << endl;
-			break;
-		}
+		//printf("In %ith iteration, node %i now has the norm of gradient: %E \n", iter, rank, grad_norm);
 
 		cblas_dcopy(instance.m, &local_gradient[0], 1, &r[0], 1);
 
@@ -371,17 +403,18 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 			cblas_daxpy(instance.m, 1.0, &s[0], 1, &u[0], 1);
 
 			double r_normLocal = cblas_l2_norm(instance.m, &r[0], 1);
-			constantLocal[5] = r_normLocal;
-			vall_reduce(world, constantLocal, constantSum);
 			inner_iter++;
-			if ( inner_iter > 20) {			//	if (r_norm <= epsilon || inner_iter > 100)
+			if (constantSum[5] == 0){
+				break; // stop if all the inner flag = 0.
+			}
+			if ( r_normLocal <= epsilon || inner_iter > 100) {			//	if (r_norm <= epsilon || inner_iter > 100)
 				cblas_dcopy(instance.m, &v[0], 1, &vk[0], 1);
 				double vHvLocal = cblas_ddot(instance.m, &vk[0], 1, &Hv_local[0], 1); //vHvT^(t) or vHvT^(t+1)
 				double vHuLocal = cblas_ddot(instance.m, &vk[0], 1, &Hu_local[0], 1);
 				constantLocal[3] = vHvLocal;
 				constantLocal[4] = vHuLocal;
-				flag = 0;
-				break;
+				innerflag = 0;
+				constantLocal[5] = innerflag;
 				//vall_reduce(world, flag, flagWorld);
 			}
 
@@ -389,6 +422,27 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 		vall_reduce(world, constantLocal, constantSum);
 		deltak = sqrt(constantSum[3] + alpha * constantSum[4]);
 		cblas_daxpy(instance.m, -1.0 / (1.0 + deltak), &vk[0], 1, &w[0], 1);
+
+		finish = gettime_();
+		elapsedTime += finish - start;
+
+		compute_objective(w, instance, obj, world);
+		//constantLocal[7] = obj; vall_reduce(world, constantLocal, constantSum);
+
+		if (rank == 0) {
+			difference = abs(obj - objPre) / obj;
+			printf("%ith runs %i CG iterations, the norm of gradient is %E, the objective gap is %E\n", 
+									iter, inner_iter, constantSum[6], difference);
+			logFile << iter << "," << elapsedTime << "," << constantSum[6] << ","<<difference<<endl;
+		}
+		objPre = obj;
+
+		if (constantSum[6] < 1e-8) {
+			//cout << endl;
+			//flag = 0;
+			//constantLocal[6] = flag;
+			break;
+		}
 
 	}
 

@@ -175,6 +175,8 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 	// Broadcastw_k
 	std::vector<int> flag(2);
 	mpi::request reqs[1];
+	double difference;
+	double objPre;
 
 	double start = 0;
 	double finish = 0;
@@ -184,7 +186,7 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 	double epsilon;
 	double alpha = 0.0;
 	double beta = 0.0;
-	unsigned int batchSize = 100;
+	unsigned int batchSize = 10;
 
 	std::vector<double> v(instance.m);
 	std::vector<double> s(instance.m);
@@ -298,9 +300,11 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 		//if (world.rank() == 1) 	cout  << objective_world << endl;
 
 		if (world.rank() == 0) {
-		printf("%ith runs %i CG iterations, the norm of gradient is %E, the objective value is %E\n",
-												 iter, inner_iter, grad_norm, objective_world[0]);
-		logFile << iter << "," << elapsedTime << "," << grad_norm << "," << objective_world[0]<<endl;
+		difference = abs(objective_world[0] - objPre) / objective_world[0];
+		objPre = objective_world[0];
+		printf("%ith runs %i CG iterations, the norm of gradient is %E, the objective gap is %E\n",
+												 iter, inner_iter, grad_norm, difference);
+		logFile << iter << "," << elapsedTime << "," << grad_norm << "," << difference<<endl;
 		}
 		if (flag[1] == 0)
 			break;

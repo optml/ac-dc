@@ -64,11 +64,12 @@ int main(int argc, char *argv[]) {
 
 	//for (unsigned int i = 0; i < K; i++){
 	//	update_w(w, vk, deltak);
-	if (world.rank() == 0){
-		printf("Computing initial point starts!\n");
-		printf("\n");
-	}
-	compute_initial_w(w, instance, rho, world.rank());
+
+	// if (world.rank() == 0){
+	// 	printf("Computing initial point starts!\n");
+	// 	printf("\n");
+	// }
+	// compute_initial_w(w, instance, rho, world.rank());
 	distributed_PCGByD_SparseP(w, instance, mu, vk, deltak, world, world.size(), world.rank(), logFile);
 
 	//}

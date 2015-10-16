@@ -1,7 +1,7 @@
 
 def main():
     nPart = 8
-    name = 'kdd'
+    name = 'url'
     f = open('data/%s.4/%s' %(name, name),'rU')
 
     dic = {}
