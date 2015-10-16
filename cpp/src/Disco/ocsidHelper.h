@@ -24,7 +24,8 @@ void compute_objective(std::vector<double> &w, ProblemData<unsigned int, double>
 	vall_reduce(world, w_x, w_x_world);
 
 	for (unsigned int idx = 0; idx < instance.n; idx++) {
-		obj += 0.5 * (w_x_world[idx] - instance.b[idx]) * (w_x_world[idx] - instance.b[idx]);
+		obj += 0.5 * (w_x_world[idx] * instance.b[idx]- instance.b[idx]) *
+		  (w_x_world[idx] * instance.b[idx] - instance.b[idx]);
 		//obj += log(1.0 + exp(-1.0 * instance.b[idx] * w_x));
 	}
 
@@ -76,7 +77,7 @@ void compute_gradient(std::vector<double> &w, std::vector<double> &Aw, std::vect
 
 	for (unsigned int idx = 0; idx < instance.n; idx++) {
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
-			grad[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] / instance.total_n
+			grad[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] * instance.b[idx] / instance.total_n
 			                                   * (Aw[idx] - instance.b[idx]);
 
 		//cout<<instance.A_csr_row_ptr[idx]<<"    ";
@@ -93,7 +94,7 @@ void computeDataMatrixATimesU(std::vector<double> &w, std::vector<double> &u, st
 	for (unsigned int idx = 0; idx < instance.n; idx++) {
 		Au[idx] = 0;
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
-			Au[idx] += instance.A_csr_values[i] * u[instance.A_csr_col_idx[i]];
+			Au[idx] += instance.A_csr_values[i] * instance.b[idx] * u[instance.A_csr_col_idx[i]];
 	}
 
 
@@ -107,7 +108,7 @@ void computeLocalHessianTimesAU(std::vector<double> &w, std::vector<double> &u, 
 
 	for (unsigned int idx = 0; idx < instance.n; idx++) {
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
-			Hu_local[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] * Au[idx] / instance.n;
+			Hu_local[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] * instance.b[idx] * Au[idx] / instance.n;
 	}
 
 	for (unsigned int i = 0; i < instance.m; i++)
@@ -141,7 +142,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 	double obj;
 	double alpha = 0.0;
 	double beta = 0.0;
-	unsigned int batchSize = 100;
+	unsigned int batchSize = 10;
 
 	std::vector<double> P(instance.m);
 	std::vector<double> v(instance.m);
@@ -355,14 +356,15 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 
 		cblas_dcopy(instance.m, &local_gradient[0], 1, &r[0], 1);
 
-		for (unsigned int idx = 0; idx < instance.n; idx++) {
-			for (unsigned int i = instance.A_csr_row_ptr[idx];	i < instance.A_csr_row_ptr[idx + 1]; i++) {
-				for (unsigned int j = instance.A_csr_row_ptr[idx];	j < instance.A_csr_row_ptr[idx + 1]; j++) {
+		for (unsigned int idx1 = 0; idx1 < 100; idx1++) {
+			for (unsigned int idx2 = 0; idx2 < 100; idx2++) {
+			for (unsigned int i = instance.A_csr_row_ptr[idx1];	i < instance.A_csr_row_ptr[idx1 + 1]; i++) {
+				for (unsigned int j = instance.A_csr_row_ptr[idx2];	j < instance.A_csr_row_ptr[idx2 + 1]; j++) {
 					P[instance.m * instance.A_csr_col_idx[i] + instance.A_csr_col_idx[j]] +=
-					    instance.A_csr_values[i] * instance.A_csr_values[j] / instance.total_n;
+					    instance.A_csr_values[i] * instance.b[idx1] * instance.b[idx2] * instance.A_csr_values[j] / instance.total_n;
 				}
 			}
-		}
+		}}
 		for (unsigned int i = 0; i < instance.m; i++) {
 			P[instance.m * i + i] += instance.lambda + mu;
 		}

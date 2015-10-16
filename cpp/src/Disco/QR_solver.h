@@ -158,7 +158,8 @@ void WoodburySolver(ProblemData<unsigned int, double> &instance, unsigned int &n
 			unsigned int j = instance.A_csr_row_ptr[idx2];
 			while (i < instance.A_csr_row_ptr[idx1+1] && j < instance.A_csr_row_ptr[idx2+1]){
 				if (instance.A_csr_col_idx[i] == instance.A_csr_col_idx[j]){
-					woodburyH[idx1 * batchSize + idx2] += instance.A_csr_values[i] * instance.A_csr_values[j] / diag;
+					woodburyH[idx1 * batchSize + idx2] += instance.A_csr_values[i] * instance.A_csr_values[j] 
+										* instance.b[idx1] * instance.b[idx2] / diag;
 					i++;
 					j++;
 				}
@@ -175,7 +176,7 @@ void WoodburySolver(ProblemData<unsigned int, double> &instance, unsigned int &n
 
 	for (unsigned int idx = 0; idx < batchSize; idx++){
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++){
-			woodburyVTy[idx] += instance.A_csr_values[i] * b[instance.A_csr_col_idx[i]] / diag;
+			woodburyVTy[idx] += instance.A_csr_values[i] * instance.b[idx] * b[instance.A_csr_col_idx[i]] / diag;
 		}
 	}
 
@@ -183,7 +184,7 @@ void WoodburySolver(ProblemData<unsigned int, double> &instance, unsigned int &n
 	
 	for (unsigned int idx = 0; idx < batchSize; idx++){
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++){
-			woodburyZHVTy[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] / diag * woodburyHVTy[idx];
+			woodburyZHVTy[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] * instance.b[idx] / diag * woodburyHVTy[idx];
 		}
 	}
 
