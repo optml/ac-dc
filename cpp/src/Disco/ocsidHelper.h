@@ -8,8 +8,8 @@
 #include "QR_solver.h"
 
 
-void compute_objective(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &obj, 
-								boost::mpi::communicator &world) {
+void compute_objective(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &obj,
+                       boost::mpi::communicator &world) {
 
 	obj = 0.0;
 	std::vector<double> w_x(instance.n + 1);
@@ -24,8 +24,8 @@ void compute_objective(std::vector<double> &w, ProblemData<unsigned int, double>
 	vall_reduce(world, w_x, w_x_world);
 
 	for (unsigned int idx = 0; idx < instance.n; idx++) {
-		obj += 0.5 * (w_x_world[idx] * instance.b[idx]- instance.b[idx]) *
-		  (w_x_world[idx] * instance.b[idx] - instance.b[idx]);
+		obj += 0.5 * (w_x_world[idx] * instance.b[idx] - instance.b[idx]) *
+		       (w_x_world[idx] * instance.b[idx] - instance.b[idx]);
 		//obj += log(1.0 + exp(-1.0 * instance.b[idx] * w_x));
 	}
 
@@ -90,7 +90,6 @@ void compute_gradient(std::vector<double> &w, std::vector<double> &Aw, std::vect
 void computeDataMatrixATimesU(std::vector<double> &w, std::vector<double> &u, std::vector<double> &Au,
                               ProblemData<unsigned int, double> &instance) {
 
-//	cblas_set_to_zero(Au); <- not necesary as you are updating Au[idx] in a loop sequencially
 	for (unsigned int idx = 0; idx < instance.n; idx++) {
 		Au[idx] = 0;
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++)
@@ -119,8 +118,8 @@ void computeLocalHessianTimesAU(std::vector<double> &w, std::vector<double> &u, 
 
 
 
-void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int, double> &instance, 
-								ProblemData<unsigned int, double> &preConData, double &mu,
+void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int, double> &instance,
+                                ProblemData<unsigned int, double> &preConData, double &mu,
                                 std::vector<double> &vk, double &deltak, boost::mpi::communicator &world, int nPartition, int rank,
                                 std::ofstream &logFile) {
 
@@ -163,10 +162,25 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 	std::vector<double> woodburyU(instance.m * batchSize);
 
 	flag = 1;
-	constantLocal[6] = flag;
-	constantSum[6] = flag;	
 
-	for (unsigned int iter = 0; iter < 500; iter++) {
+	compute_objective(w, instance, obj, world);
+	computeDataMatrixATimesU(w, w, Aw_local, instance);
+
+	vall_reduce(world, Aw_local, Aw);
+	compute_gradient(w, Aw, local_gradient, instance);
+	grad_norm = cblas_l2_norm(instance.m, &local_gradient[0], 1);
+	constantLocal[6] = grad_norm;
+	vall_reduce(world, constantLocal, constantSum);
+
+	if (rank == 0) {
+		difference = abs(obj - objPre) / obj;
+		printf("%ith runs %i CG iterations, the norm of gradient is %E, the objective gap is %E\n",
+		       0, 0, constantSum[6], difference);
+		logFile << 0 << "," << 0 << "," << 0 << "," << constantSum[6]  << "," << difference << endl;
+	}
+	objPre = obj;
+
+	for (unsigned int iter = 1; iter <= 100; iter++) {
 		// Compute local first derivative
 		start = gettime_();
 		innerflag = 1;
@@ -184,12 +198,13 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 		vall_reduce(world, constantLocal, constantSum);
 		epsilon = 0.05 * grad_norm * sqrt(instance.lambda / 10.0);
 		//printf("In %ith iteration, node %i now has the norm of gradient: %E \n", iter, rank, grad_norm);
-		
+
 		cblas_dcopy(instance.m, &local_gradient[0], 1, &r[0], 1);
 
 		double diag = instance.lambda + mu;
 		// s= p^-1 r
-		WoodburySolver(preConData, instance, instance.m, batchSize, r, s, diag, world);
+		//WoodburySolver(preConData, instance, instance.m, batchSize, r, s, diag, world);
+		ifNoPreconditioning(instance.m, r, s);
 
 		cblas_dcopy(instance.m, &s[0], 1, &u[0], 1);
 		int inner_iter = 0;
@@ -197,7 +212,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 		// the others, there has to be a reduceall operation somehow after that.
 		while (1) { //		while (flag != 0)
 			computeDataMatrixATimesU(w, u, Au_local, instance);
-			vall_reduce(world, Au_local, Au);  
+			vall_reduce(world, Au_local, Au);
 			computeLocalHessianTimesAU(w, u, Au, Hu_local, instance);
 
 			double rsLocal = cblas_ddot(instance.m, &r[0], 1, &s[0], 1);
@@ -213,8 +228,9 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 
 
 			//CGSolver(P, instance.m, r, s);
-			WoodburySolver(preConData, instance, instance.m, batchSize, r, s, diag, world);
-	
+			//WoodburySolver(preConData, instance, instance.m, batchSize, r, s, diag, world);
+			ifNoPreconditioning(instance.m, r, s);
+
 			double rsNextLocal = cblas_ddot(instance.m, &r[0], 1, &s[0], 1);
 			constantLocal[2] = rsNextLocal;
 			vall_reduce(world, constantLocal, constantSum);
@@ -225,7 +241,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 
 			double r_normLocal = cblas_l2_norm(instance.m, &r[0], 1);
 			inner_iter++;
-			if (constantSum[5] == 0){
+			if (constantSum[5] == 0) {
 				break; // stop if all the inner flag = 0.
 			}
 
@@ -251,9 +267,9 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 
 		if (rank == 0) {
 			difference = abs(obj - objPre) / obj;
-			printf("%ith runs %i CG iterations, the norm of gradient is %E, the objective gap is %E\n", 
-									iter, inner_iter, constantSum[6], difference);
-			logFile << iter << "," << elapsedTime << "," << constantSum[6] << ","<<difference<<endl;
+			printf("%ith runs %i CG iterations, the norm of gradient is %E, the objective gap is %E\n",
+			       iter, inner_iter, constantSum[6], difference);
+			logFile << iter << "," << inner_iter << "," << elapsedTime << "," << constantSum[6] << "," << difference << endl;
 		}
 		objPre = obj;
 
@@ -312,7 +328,7 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 
 	flag = 1;
 	constantLocal[6] = flag;
-	constantSum[6] = flag;	
+	constantSum[6] = flag;
 	for (unsigned int iter = 0; iter < 500; iter++) {
 		// Compute local first derivative
 		innerflag = 1;
@@ -337,13 +353,14 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 
 		for (unsigned int idx1 = 0; idx1 < 100; idx1++) {
 			for (unsigned int idx2 = 0; idx2 < 100; idx2++) {
-			for (unsigned int i = instance.A_csr_row_ptr[idx1];	i < instance.A_csr_row_ptr[idx1 + 1]; i++) {
-				for (unsigned int j = instance.A_csr_row_ptr[idx2];	j < instance.A_csr_row_ptr[idx2 + 1]; j++) {
-					P[instance.m * instance.A_csr_col_idx[i] + instance.A_csr_col_idx[j]] +=
-					    instance.A_csr_values[i] * instance.b[idx1] * instance.b[idx2] * instance.A_csr_values[j] / instance.total_n;
+				for (unsigned int i = instance.A_csr_row_ptr[idx1];	i < instance.A_csr_row_ptr[idx1 + 1]; i++) {
+					for (unsigned int j = instance.A_csr_row_ptr[idx2];	j < instance.A_csr_row_ptr[idx2 + 1]; j++) {
+						P[instance.m * instance.A_csr_col_idx[i] + instance.A_csr_col_idx[j]] +=
+						    instance.A_csr_values[i] * instance.b[idx1] * instance.b[idx2] * instance.A_csr_values[j] / instance.total_n;
+					}
 				}
 			}
-		}}
+		}
 		for (unsigned int i = 0; i < instance.m; i++) {
 			P[instance.m * i + i] += instance.lambda + mu;
 		}
@@ -385,7 +402,7 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 
 			double r_normLocal = cblas_l2_norm(instance.m, &r[0], 1);
 			inner_iter++;
-			if (constantSum[5] == 0){
+			if (constantSum[5] == 0) {
 				break; // stop if all the inner flag = 0.
 			}
 			if ( r_normLocal <= epsilon || inner_iter > 100) {			//	if (r_norm <= epsilon || inner_iter > 100)
@@ -412,9 +429,9 @@ void distributed_PCGByD(std::vector<double> &w, ProblemData<unsigned int, double
 
 		if (rank == 0) {
 			difference = abs(obj - objPre) / obj;
-			printf("%ith runs %i CG iterations, the norm of gradient is %E, the objective gap is %E\n", 
-									iter, inner_iter, constantSum[6], difference);
-			logFile << iter << "," << elapsedTime << "," << constantSum[6] << ","<<difference<<endl;
+			printf("%ith runs %i CG iterations, the norm of gradient is %E, the objective gap is %E\n",
+			       iter, inner_iter, constantSum[6], difference);
+			logFile << iter << "," << elapsedTime << "," << constantSum[6] << "," << difference << endl;
 		}
 		objPre = obj;
 

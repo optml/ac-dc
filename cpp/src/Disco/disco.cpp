@@ -36,8 +36,8 @@ int main(int argc, char *argv[]) {
 	}
 	ProblemData<unsigned int, double> instance;
 	instance.theta = ctx.tmp;
-	cout << "XXXXXXXx   " << instance.theta << endl;
-	cout << world.rank() << " going to load data" << endl; 
+	//cout << "XXXXXXXx   " << instance.theta << endl;
+	//cout << world.rank() << " going to load data" << endl; 
 	//ctx.matrixAFile = "/Users/Schemmy/Desktop/ac-dc/cpp/data/a1a.4/a1a";
 	//cout<< ctx.matrixAFile<<endl;
 
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 	instance.lambda = ctx.lambda;
 
 	double rho = 1.0 / instance.n;
-	double mu = 0.9;
+	double mu = 0.00001;
 
 	std::vector<double> w(instance.m);
 	//for (unsigned int i = 0; i < instance.m; i++)	w[i] = 0.1*rand() / (RAND_MAX + 0.0);
@@ -63,12 +63,11 @@ int main(int argc, char *argv[]) {
 	double deltak = 0.0;
 	
 	std::stringstream ss;
-	ss << ctx.matrixAFile << "_ParSam_" << world.size() << ".log";
+	ss << ctx.matrixAFile << "_1_" << world.size() << ".log";
 	std::ofstream logFile;
 	logFile.open(ss.str().c_str());
 	
 	//compute_initial_w(w, instance, rho);
-	//for (unsigned int i = 0; i < K; i++){
 	
 	// if (world.rank() == 0) {
 	// 	compute_initial_w(w, instance, rho, world.rank());

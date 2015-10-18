@@ -335,14 +335,14 @@ void readPartDataForPreCondi(string inputFile, ProblemData<L, D> & part, L Neede
 
 	stringstream ss;
 	ss << inputFile;
-	ss << "_reorder";
+	//ss << "_reorder";
 
 //	cout << "Going to read data" << endl;
 	parse_LIB_SVM_data_get_size(ss.str().c_str(), nsamples, nfeatures, nonzero_elements_of_input_data);
 
-//	cout << "Data file contains " << nfeatures << " features, "
-//			<< nsamples << " samples " << "and total "
-//			<< nonzero_elements_of_input_data << " nnz elements" << endl;
+	//cout << "Data file contains " << nfeatures << " features, "
+	//		<< nsamples << " samples " << "and total "
+	//		<< nonzero_elements_of_input_data << " nnz elements" << endl;
 
 	FILE* filePtr = fopen(ss.str().c_str(), "r");
 	if (filePtr == 0) {

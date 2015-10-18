@@ -37,11 +37,11 @@ int main(int argc, char *argv[]) {
 
 	ProblemData<unsigned int, double> instance;
 	ProblemData<unsigned int, double> preConData;
-	unsigned int sizePreCon = 100;
+	unsigned int sizePreCon = 1;
 	//ProblemData<unsigned int, double> newInstance;
 	//readWholeData(ctx.matrixAFile, instance, false);
 	loadDistributedByFeaturesSVMRowData(ctx.matrixAFile, world.rank(), world.size(), instance, false);
-	readPartDataForPreCondi(ctx.matrixAFile, preConData, sizePreCon, false);
+	//readPartDataForPreCondi(ctx.matrixAFile, preConData, sizePreCon, false);
 	unsigned int finalM;
 	instance.total_n = instance.n;
 	//partitionByFeature(instance, newInstance, world.size(), world.rank());
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 
 
 	double rho = 1.0 / sqrt(instance.n);
-	double mu = 0.1;
+	double mu = 0.001;
 
 	std::vector<double> w(instance.m);
 	//for (unsigned int i = 0; i < instance.m; i++)	w[i] = 0.1*rand() / (RAND_MAX + 0.0);
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 	double deltak = 0.0;
 
 	std::stringstream ss;
-	ss << ctx.matrixAFile << "_ParFea_" << world.size() << ".log";
+	ss << ctx.matrixAFile << "_2_" << world.size() << ".log";
 	std::ofstream logFile;
 	logFile.open(ss.str().c_str());
 	
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
 	// 	printf("Computing initial point starts!\n");
 	// 	printf("\n");
 	// }
-	// compute_initial_w(w, instance, rho, world.rank());
+	//compute_initial_w(w, instance, rho, world.rank());
 	distributed_PCGByD_SparseP(w, instance, preConData, mu, vk, deltak, world, world.size(), world.rank(), logFile);
 
 	//}
