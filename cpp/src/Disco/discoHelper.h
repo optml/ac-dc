@@ -186,8 +186,9 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 	double epsilon;
 	double alpha = 0.0;
 	double beta = 0.0;
-	unsigned int batchSize = 10;
+	unsigned int batchSize = 1;
 
+	std::vector<double> P(instance.m * instance.m);
 	std::vector<double> v(instance.m);
 	std::vector<double> s(instance.m);
 	std::vector<double> r(instance.m);
@@ -232,9 +233,20 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 
 			for (unsigned int i = 0; i < batchSize; i++)
 				randPick[i] = rand() / (0.0 + RAND_MAX) * instance.n;
-
+			for (unsigned int idx = 0; idx < 1; idx++) {
+				for (unsigned int i = instance.A_csr_row_ptr[idx];	i < instance.A_csr_row_ptr[idx + 1]; i++) {
+					for (unsigned int j = instance.A_csr_row_ptr[idx];	j < instance.A_csr_row_ptr[idx + 1]; j++) {
+						P[instance.m * instance.A_csr_col_idx[i] + instance.A_csr_col_idx[j]] +=
+						    instance.A_csr_values[i] * instance.A_csr_values[j] / instance.total_n;
+					}
+				}
+			}
+			for (unsigned int i = 0; i < instance.m; i++) {
+				P[instance.m * i + i] += instance.lambda + mu;
+			}
 			// s= p^-1 r
-			WoodburySolver(instance, instance.m, batchSize, r, s, randPick, diag);
+			CGSolver(P, instance.m, r, s);
+			//WoodburySolverForDisco(instance, instance.m, batchSize, r, s, randPick, diag);
 			cblas_dcopy(instance.m, &s[0], 1, &u[0], 1);
 
 		}
@@ -259,8 +271,8 @@ void distributed_PCG_SparseP(std::vector<double> &w, ProblemData<unsigned int, d
 				cblas_daxpy(instance.m, -alpha, &Hu[0], 1, &r[0], 1);
 
 				// ? solve linear system to get new s
-				//CGSolver(P, instance.m, r, s);
-				WoodburySolver(instance, instance.m, batchSize, r, s, randPick, diag);
+				CGSolver(P, instance.m, r, s);
+				//WoodburySolverForDisco(instance, instance.m, batchSize, r, s, randPick, diag);
 
 				double nom_new = cblas_ddot(instance.m, &r[0], 1, &s[0], 1);
 				beta = nom_new / nom;

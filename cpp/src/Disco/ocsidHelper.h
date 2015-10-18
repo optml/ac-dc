@@ -119,7 +119,8 @@ void computeLocalHessianTimesAU(std::vector<double> &w, std::vector<double> &u, 
 
 
 
-void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int, double> &instance, double &mu,
+void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int, double> &instance, 
+								ProblemData<unsigned int, double> &preConData, double &mu,
                                 std::vector<double> &vk, double &deltak, boost::mpi::communicator &world, int nPartition, int rank,
                                 std::ofstream &logFile) {
 
@@ -142,7 +143,7 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 	double obj;
 	double alpha = 0.0;
 	double beta = 0.0;
-	unsigned int batchSize = 10;
+	unsigned int batchSize = preConData.n;
 
 	std::vector<double> P(instance.m);
 	std::vector<double> v(instance.m);
@@ -174,7 +175,6 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 
 		cblas_set_to_zero(v);
 		cblas_set_to_zero(Hv_local);
-//		cout<<iter<<endl;
 		computeDataMatrixATimesU(w, w, Aw_local, instance);
 
 		vall_reduce(world, Aw_local, Aw);
@@ -184,31 +184,13 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 		vall_reduce(world, constantLocal, constantSum);
 		epsilon = 0.05 * grad_norm * sqrt(instance.lambda / 10.0);
 		//printf("In %ith iteration, node %i now has the norm of gradient: %E \n", iter, rank, grad_norm);
-
-		//if (constantSum[6] == 0) 	break;
 		
-
 		cblas_dcopy(instance.m, &local_gradient[0], 1, &r[0], 1);
-
-
-		for (unsigned int i = 0; i < batchSize; i++)
-			randPick[i] = rand() / (0.0 + RAND_MAX) * instance.n;
 
 		double diag = instance.lambda + mu;
 		// s= p^-1 r
-		WoodburySolver(instance, instance.m, batchSize, r, s, randPick, diag);
-		// for (unsigned int idx = 0; idx < instance.n; idx++) {
-		// 	for (unsigned int i = instance.A_csr_row_ptr[idx];	i < instance.A_csr_row_ptr[idx + 1]; i++) {
-		// 			P[instance.A_csr_col_idx[i]] +=
-		// 			    instance.A_csr_values[i] * instance.A_csr_values[i] / instance.total_n;
-		// 	}
-		// }
-		// for (unsigned int i = 0; i < instance.m; i++) {
-		// 	P[i] += instance.lambda + mu;
-		// }		
-		// for (unsigned int i = 0; i < instance.m; i++) {
-		// 	s[i] = r[i]/P[i];
-		// }	
+		WoodburySolver(preConData, instance, instance.m, batchSize, r, s, diag, world);
+
 		cblas_dcopy(instance.m, &s[0], 1, &u[0], 1);
 		int inner_iter = 0;
 		// can only use this type of iteration now. Any stop or break in one node will interrupt
@@ -223,16 +205,15 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 			constantLocal[0] = rsLocal;
 			constantLocal[1] = uHuLocal;
 			vall_reduce(world, constantLocal, constantSum);
-			//if (rank == 3) cout<<constantLocal[0]<<"    "<<constantSum[0]<<endl;
+
 			alpha = constantSum[0] / constantSum[1];
 			cblas_daxpy(instance.m, alpha, &u[0], 1, &v[0], 1);
 			cblas_daxpy(instance.m, alpha, &Hu_local[0], 1, &Hv_local[0], 1);
 			cblas_daxpy(instance.m, -alpha, &Hu_local[0], 1, &r[0], 1);
 
-			// ? solve linear system to get new s
+
 			//CGSolver(P, instance.m, r, s);
-			WoodburySolver(instance, instance.m, batchSize, r, s, randPick, diag);
-			//for (unsigned int i = 0; i < instance.m; i++) 	s[i] = r[i]/P[i];
+			WoodburySolver(preConData, instance, instance.m, batchSize, r, s, diag, world);
 	
 			double rsNextLocal = cblas_ddot(instance.m, &r[0], 1, &s[0], 1);
 			constantLocal[2] = rsNextLocal;
@@ -256,7 +237,6 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 				constantLocal[4] = vHuLocal;
 				innerflag = 0;
 				constantLocal[5] = innerflag;
-				//vall_reduce(world, flag, flagWorld);
 			}
 
 		}
@@ -268,7 +248,6 @@ void distributed_PCGByD_SparseP(std::vector<double> &w, ProblemData<unsigned int
 		elapsedTime += finish - start;
 
 		compute_objective(w, instance, obj, world);
-		//constantLocal[7] = obj; vall_reduce(world, constantLocal, constantSum);
 
 		if (rank == 0) {
 			difference = abs(obj - objPre) / obj;

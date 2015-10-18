@@ -36,10 +36,12 @@ int main(int argc, char *argv[]) {
 	}
 
 	ProblemData<unsigned int, double> instance;
-	ProblemData<unsigned int, double> newInstance;
+	ProblemData<unsigned int, double> preConData;
+	unsigned int sizePreCon = 100;
+	//ProblemData<unsigned int, double> newInstance;
 	//readWholeData(ctx.matrixAFile, instance, false);
 	loadDistributedByFeaturesSVMRowData(ctx.matrixAFile, world.rank(), world.size(), instance, false);
-	
+	readPartDataForPreCondi(ctx.matrixAFile, preConData, sizePreCon, false);
 	unsigned int finalM;
 	instance.total_n = instance.n;
 	//partitionByFeature(instance, newInstance, world.size(), world.rank());
@@ -70,7 +72,7 @@ int main(int argc, char *argv[]) {
 	// 	printf("\n");
 	// }
 	// compute_initial_w(w, instance, rho, world.rank());
-	distributed_PCGByD_SparseP(w, instance, mu, vk, deltak, world, world.size(), world.rank(), logFile);
+	distributed_PCGByD_SparseP(w, instance, preConData, mu, vk, deltak, world, world.size(), world.rank(), logFile);
 
 	//}
 	logFile.close();
@@ -78,5 +80,5 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 
-B}
+}
 

@@ -143,9 +143,57 @@ void CGSolver(std::vector<double> &A, int n,
 
 
 
-void WoodburySolver(ProblemData<unsigned int, double> &instance, unsigned int &n, unsigned int &batchSize,
-	std::vector<double> &b, std::vector<double> &x, 
-	std::vector<unsigned int> &randPick, double &diag) {
+void WoodburySolver(ProblemData<unsigned int, double> &preConData, ProblemData<unsigned int, double> &instance,
+	 unsigned int &n, unsigned int &batchSize, std::vector<double> &b, std::vector<double> &x, double &diag, 
+	 boost::mpi::communicator &world) {
+	
+	std::vector<double> woodburyH(batchSize * batchSize);
+	std::vector<double> woodburyVTy(batchSize);
+	std::vector<double> woodburyVTy_World(batchSize);
+	std::vector<double> woodburyHVTy(batchSize);
+	std::vector<double> woodburyZHVTy(n);
+
+	for (unsigned int idx1 = 0; idx1 < batchSize; idx1++){
+		for (unsigned int idx2 = 0; idx2 < batchSize; idx2++){
+			for (unsigned int i = preConData.A_csr_row_ptr[idx1]; i < preConData.A_csr_row_ptr[idx1 + 1]; i++){
+				for (unsigned int j = preConData.A_csr_row_ptr[idx2]; j < preConData.A_csr_row_ptr[idx2 + 1]; j++){
+					if (preConData.A_csr_col_idx[i] == preConData.A_csr_col_idx[j])
+						woodburyH[idx1 * batchSize + idx2] += preConData.A_csr_values[i] * preConData.A_csr_values[j]
+									* preConData.b[i] * preConData.b[j] / diag;
+				}
+			}
+		}
+	}
+
+	for (unsigned int idx = 0; idx < batchSize; idx++)
+		woodburyH[idx * batchSize + idx] += 1.0;
+
+	for (unsigned int idx = 0; idx < batchSize; idx++){
+		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++){
+			woodburyVTy[idx] += instance.A_csr_values[i] * instance.b[idx] * b[instance.A_csr_col_idx[i]] / diag;
+		}
+	}
+	vall_reduce(world, woodburyVTy, woodburyVTy_World);
+
+	CGSolver(woodburyH, batchSize, woodburyVTy_World, woodburyHVTy);
+	
+	for (unsigned int idx = 0; idx < batchSize; idx++){
+		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++){
+			woodburyZHVTy[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] * instance.b[idx] 
+														/ diag * woodburyHVTy[idx];
+		}
+	}
+
+	for (unsigned int i = 0; i < n; i++){
+		x[i] = b[i] / diag - woodburyZHVTy[i];
+	}
+
+}
+
+
+void WoodburySolverForDisco(ProblemData<unsigned int, double> &instance,
+	 unsigned int &n, unsigned int &batchSize, std::vector<double> &b, std::vector<double> &x, 
+	 std::vector<unsigned int> &randPick, double &diag) {
 	
 	std::vector<double> woodburyH(batchSize * batchSize);
 	std::vector<double> woodburyVTy(batchSize);
@@ -158,8 +206,8 @@ void WoodburySolver(ProblemData<unsigned int, double> &instance, unsigned int &n
 			unsigned int j = instance.A_csr_row_ptr[idx2];
 			while (i < instance.A_csr_row_ptr[idx1+1] && j < instance.A_csr_row_ptr[idx2+1]){
 				if (instance.A_csr_col_idx[i] == instance.A_csr_col_idx[j]){
-					woodburyH[idx1 * batchSize + idx2] += instance.A_csr_values[i] * instance.A_csr_values[j] 
-										* instance.b[idx1] * instance.b[idx2] / diag;
+					woodburyH[idx1 * batchSize + idx2] += instance.A_csr_values[i] * instance.A_csr_values[j]
+					* instance.b[idx1] * instance.b[idx2] / diag;
 					i++;
 					j++;
 				}
@@ -170,7 +218,6 @@ void WoodburySolver(ProblemData<unsigned int, double> &instance, unsigned int &n
 			}
 		}
 	}
-
 	for (unsigned int idx = 0; idx < batchSize; idx++)
 		woodburyH[idx * batchSize + idx] += 1.0;
 
@@ -184,18 +231,15 @@ void WoodburySolver(ProblemData<unsigned int, double> &instance, unsigned int &n
 	
 	for (unsigned int idx = 0; idx < batchSize; idx++){
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++){
-			woodburyZHVTy[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] * instance.b[idx] / diag * woodburyHVTy[idx];
+			woodburyZHVTy[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] * instance.b[idx] 
+														/ diag * woodburyHVTy[idx];
 		}
 	}
 
 	for (unsigned int i = 0; i < n; i++){
 		x[i] = b[i] / diag - woodburyZHVTy[i];
 	}
-
 }
-
-
-
 
 void ifIdenticalP(std::vector<double> &A, int n, 
 	std::vector<double> &b, std::vector<double> &x) {

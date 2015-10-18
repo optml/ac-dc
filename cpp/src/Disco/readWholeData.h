@@ -184,10 +184,10 @@ int loadDistributedByFeaturesSVMRowData(string inputFile, int file, int totalFil
 						}
 
 						processedSamples++;
-						//part.b[processedSamples] = ddval; // used for a1a data
+						part.b[processedSamples] = ddval; // used for a1a data
 						if (ddval != -1 && ddval != 1)
 							cout << part.b[processedSamples] << endl;
-						part.b[processedSamples] = (-1.5 + ddval) * 2.0; // used for covtype data
+						//part.b[processedSamples] = (-1.5 + ddval) * 2.0; // used for covtype data
 						part.A_csr_row_ptr[processedSamples] = nnzPossition;
 
 						pos++;
@@ -326,42 +326,119 @@ void partitionByFeature(ProblemData<L, D> & part, ProblemData<L, D> & newpart, i
 }
 
 template<typename D, typename L>
-void partitionByFeature_mod(ProblemData<L, D> & part, int nPartition, int rank) {
+void readPartDataForPreCondi(string inputFile, ProblemData<L, D> & part, L Needed, bool zeroBased) {
 
-	L nsamples = part.n;
-	L nfeatures = part.m;
+	int nclasses;
+	int nsamples;
+	int nfeatures;
+	long long nonzero_elements_of_input_data;
 
-	part.m = floor(nfeatures / nPartition);
-	L mod = nfeatures % nPartition;
-	if (rank < mod)
-		part.m++;
+	stringstream ss;
+	ss << inputFile;
+	ss << "_reorder";
 
-	L nnElements = part.A_csr_col_idx.size(); //cout <<nnElements<<endl;
+//	cout << "Going to read data" << endl;
+	parse_LIB_SVM_data_get_size(ss.str().c_str(), nsamples, nfeatures, nonzero_elements_of_input_data);
 
-	std::vector < D > A_csr_values(nnElements);
-	std::vector < L > A_csr_col_idx(nnElements);
-	std::vector < L > A_csr_row_ptr(nnElements);
-	std::vector < L > b(nnElements);
-	L nnz = 0;
-	L rowInd = 0;
+//	cout << "Data file contains " << nfeatures << " features, "
+//			<< nsamples << " samples " << "and total "
+//			<< nonzero_elements_of_input_data << " nnz elements" << endl;
 
-	A_csr_row_ptr[0] = 0;
-	for (L i = 0; i < nnElements; i++) {
-		if (part.A_csr_col_idx[i] % nPartition == rank) {
-			A_csr_values[nnz] = part.A_csr_values[i];
-			A_csr_col_idx[nnz] = floor(part.A_csr_col_idx[i] / nPartition);
-			b[nnz] = part.b[i];				//cout<<rank<<"   "<<part.A_csr_col_idx[i]<<endl;
-
-			if (part.A_csr_col_idx[i + 1] < part.A_csr_col_idx[i]) {
-				A_csr_row_ptr[rowInd + 1] = nnz;
-				rowInd++;
-			}
-			nnz++;
-
-		}
+	FILE* filePtr = fopen(ss.str().c_str(), "r");
+	if (filePtr == 0) {
+		printf("File   '%s' not found\n", ss.str().c_str());
 	}
-	cout << rank << "   " << nnz << "   " << rowInd << "   " << part.m << endl;
+	nsamples = Needed;
+	part.m = nfeatures;
+	part.n = nsamples;
 
+//	cout << "resize nsamples+1 " << nsamples + 1 << endl;
+	part.A_csr_row_ptr.resize(nsamples + 1);
+	part.A_csr_col_idx.resize(nonzero_elements_of_input_data);
+//	cout << "resize nnz " << nonzero_elements_of_input_data << endl;
+	part.A_csr_values.resize(nonzero_elements_of_input_data);
+//	cout << "resize nnz " << nonzero_elements_of_input_data << endl;
+	part.b.resize(nsamples);
+//	cout << "resize nsamples " << nsamples << endl;
+	L nnzPossition = 0;
+	L processedSamples = -1;
+
+	bool foundData = false;
+	char* stringBuffer = (char*) malloc(65536);
+	for (L i = 0; i < nsamples; i++) {
+
+		char c;
+		L pos = 0;
+		char* bufferPointer = stringBuffer;
+
+		do {
+			c = fgetc(filePtr);
+
+			//
+			if ((c == ' ') || (c == '\n')) {
+				if (pos == 0) {
+					//Label found
+					*(bufferPointer) = 0;
+					int value;
+					sscanf(stringBuffer, "%i", &value);
+
+					D ddval = value;
+					if (value < 100) {
+						if (nclasses == 2 && value == 0) {
+							ddval = (float) -1;
+						} else {
+						}
+
+						processedSamples++;
+						part.b[processedSamples] = ddval; // used for a1a data
+						//part.b[processedSamples] = (-1.5 + ddval) * 2.0; // used for covtype data
+						part.A_csr_row_ptr[processedSamples] = nnzPossition;
+
+						pos++;
+					}
+				} else {
+					//Feature found
+					*(bufferPointer) = 0;
+					float value;
+					sscanf(stringBuffer, "%f", &value);
+
+					if (pos > 0) {
+
+						if (!zeroBased)
+							pos--;
+
+						if (nnzPossition < nonzero_elements_of_input_data && foundData) {
+							part.A_csr_col_idx[nnzPossition] = pos;
+							part.A_csr_values[nnzPossition] = value;
+
+							foundData = false;
+							nnzPossition++;
+						}
+
+						pos = -1;
+					}
+
+				}
+				bufferPointer = stringBuffer;
+			} else if (c == ':') {
+				//Position found
+				*(bufferPointer) = 0;
+				int value;
+				sscanf(stringBuffer, "%i", &value);
+				foundData = true;
+				pos = value;
+				bufferPointer = stringBuffer;
+			} else {
+				*(bufferPointer) = c;
+				bufferPointer++;
+			}
+
+		} while (c != '\n');
+	}
+
+	processedSamples++;
+	part.A_csr_row_ptr[processedSamples] = nnzPossition;
+	free(stringBuffer);
+	fclose(filePtr);
 }
-
 #endif
