@@ -10,10 +10,11 @@
 #include "../utils/matrixvector.h"
 #include "../solver/distributed/distributed_structures.h"
 #include "../helpers/option_distributed_console_parser.h"
-#include "discoHelper.h"
 #include "readWholeData.h"
 #include "../solver/distributed/distributed_essentials.h"
 
+#include "discoHelperQuadratic.h"
+#include "discoHelperLogistic.h"
 //#ifdef MATLAB
 //
 //#include "class/QuadraticLossLbfgs.h"
@@ -55,6 +56,7 @@ int main(int argc, char *argv[]) {
 
 	double rho = 1.0 / instance.n;
 	double mu = 0.00001;
+	unsigned int batchsize = 0;
 
 	std::vector<double> w(instance.m);
 	//for (unsigned int i = 0; i < instance.m; i++)	w[i] = 0.1*rand() / (RAND_MAX + 0.0);
@@ -70,9 +72,12 @@ int main(int argc, char *argv[]) {
 	//compute_initial_w(w, instance, rho);
 	
 	// if (world.rank() == 0) {
-	// 	compute_initial_w(w, instance, rho, world.rank());
+	// 	computeInitialWQudratic(w, instance, rho, world.rank());
 	// }
-	distributed_PCG_SparseP(w, instance, mu, vk, deltak, world, logFile);
+	
+	//distributed_PCG_Quadratic(w, instance, mu, vk, deltak, batchsize, world, logFile);
+	distributed_PCG_Logistic(w, instance, mu, vk, deltak, batchsize, world, logFile);
+	
 	//	update_w(w, vk, deltak);
 	//}
 	//MPI::Finalize();

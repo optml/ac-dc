@@ -12,6 +12,8 @@ using namespace std;
 #include <gsl/gsl_blas.h> // for BLAS
 #include <gsl/gsl_linalg.h> // for LU, QR, ...
 
+#ifndef QRSOLVER_H_
+#define QRSOLVER_H_
 
 
 
@@ -110,7 +112,7 @@ void CGSolver(std::vector<double> &A, int n,
 	cblas_dcopy(n, &r[0], 1, &p[0], 1);
 	cblas_dscal(n, -1.0, &p[0], 1);	
 
-	double tol = 1e-8;	
+	double tol = 1e-16;	
 	int iter = 0;
 
 	while (1){
@@ -159,7 +161,7 @@ void WoodburySolver(ProblemData<unsigned int, double> &preConData, ProblemData<u
 				for (unsigned int j = preConData.A_csr_row_ptr[idx2]; j < preConData.A_csr_row_ptr[idx2 + 1]; j++){
 					if (preConData.A_csr_col_idx[i] == preConData.A_csr_col_idx[j])
 						woodburyH[idx1 * batchSize + idx2] += preConData.A_csr_values[i] * preConData.A_csr_values[j]
-									* preConData.b[idx1] * preConData.b[idx2] / diag/instance.n/instance.n;
+									* preConData.b[idx1] * preConData.b[idx2] / diag;
 				}
 			}
 		}
@@ -170,7 +172,7 @@ void WoodburySolver(ProblemData<unsigned int, double> &preConData, ProblemData<u
 
 	for (unsigned int idx = 0; idx < batchSize; idx++){
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++){
-			woodburyVTy[idx] += instance.A_csr_values[i] * instance.b[idx] * b[instance.A_csr_col_idx[i]] / diag/instance.n;
+			woodburyVTy[idx] += instance.A_csr_values[i] * instance.b[idx] * b[instance.A_csr_col_idx[i]] * batchSize;
 		}
 	}
 	vall_reduce(world, woodburyVTy, woodburyVTy_World);
@@ -180,7 +182,7 @@ void WoodburySolver(ProblemData<unsigned int, double> &preConData, ProblemData<u
 	for (unsigned int idx = 0; idx < batchSize; idx++){
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++){
 			woodburyZHVTy[instance.A_csr_col_idx[i]] += instance.A_csr_values[i] * instance.b[idx] 
-														/ diag * woodburyHVTy[idx]/instance.n;
+														/ diag * woodburyHVTy[idx];
 		}
 	}
 
@@ -222,7 +224,7 @@ void WoodburySolverForDisco(ProblemData<unsigned int, double> &instance,
 
 	for (unsigned int idx = 0; idx < batchSize; idx++){
 		for (unsigned int i = instance.A_csr_row_ptr[idx]; i < instance.A_csr_row_ptr[idx + 1]; i++){
-			woodburyVTy[idx] += instance.A_csr_values[i] * instance.b[idx] * b[instance.A_csr_col_idx[i]] * instance.total_n / diag;
+			woodburyVTy[idx] += instance.A_csr_values[i] * instance.b[idx] * b[instance.A_csr_col_idx[i]] * batchSize / diag;
 		}
 	}
 
@@ -248,3 +250,6 @@ void ifNoPreconditioning(int n,
 	}
 
 }
+
+
+#endif
