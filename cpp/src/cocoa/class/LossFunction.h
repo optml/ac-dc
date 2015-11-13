@@ -81,15 +81,15 @@ public:
 
 	}
 
-	virtual void LBFGS_update(ProblemData<L, D> &instance, std::vector<D> &search_direction, std::vector<D> &old_grad,
-			std::vector<D> &sk, std::vector<D> &rk, std::vector<D> &gradient, std::vector<D> &oneoversy,
+	virtual void LBFGS_update(ProblemData<L, D> &instance, std::vector<D> &search_direction, std::vector<D> old_grad,
+			std::vector<D> &sk, std::vector<D> &rk, std::vector<D> gradient, std::vector<D> &oneoversy,
 			L iter_counter, int limit_BFGS, int flag_BFGS) {
 
 	}
 
 	virtual void backtrack_linesearch(ProblemData<L, D> &instance,
-			std::vector<D> &deltaAlpha, std::vector<D> &search_direction, std::vector<D> &w, D dualobj,
-			D &rho, D &c1ls, D &a, DistributedSettings & distributedSettings){
+			std::vector<D> &deltaAlpha, std::vector<D> &search_direction, std::vector<D> &w, D &dualobj,
+			D &stepsize){
 
 	}
 
