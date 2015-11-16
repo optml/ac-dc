@@ -94,8 +94,7 @@ public:
 	}
 
 	virtual void compute_subproproblem_obj(ProblemData<L, D> &instance,
-			std::vector<D> &deltaAlpha, std::vector<D> &search_direction, std::vector<D> &w, D dualobj,
-			D &rho, D &c1ls, D &a, DistributedSettings & distributedSettings){
+			std::vector<D> &deltaAlpha, std::vector<D> &search_direction, std::vector<D> &w, D dualobj){
 
 	}
 	virtual void compute_subproproblem_gradient(ProblemData<L, D> &instance,

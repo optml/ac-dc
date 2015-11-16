@@ -43,7 +43,9 @@ int main(int argc, char *argv[]) {
 	ProblemData<unsigned int, double> instance;
 	instance.theta = ctx.tmp;
 	cout << "XXXXXXXx   " << instance.theta << endl;
-	cout << world.rank() << " going to load data" << endl;
+	cout << world.rank() << " going to load data" << endl; 
+	//ctx.matrixAFile = "/Users/Schemmy/Desktop/ac-dc/cpp/data/a1a.4/a1a";
+	//cout<< ctx.matrixAFile<<endl;
 
 	loadDistributedSparseSVMRowData(ctx.matrixAFile, world.rank(), world.size(),
 			instance, false);
@@ -52,7 +54,7 @@ int main(int argc, char *argv[]) {
 
 	vall_reduce_maximum(world, &instance.m, &finalM, 1);
 
-	cout << "Local m " << instance.m << "   global m " << finalM << endl;
+//	cout << "Local m " << instance.m << "   global m " << finalM << endl;
 
 	instance.m = finalM;
 
@@ -79,7 +81,7 @@ int main(int argc, char *argv[]) {
 	// compute local w
 	vall_reduce(world, deltaW, w);
 
-	cout << " Local n " << instance.n << endl;
+//	cout << " Local n " << instance.n << endl;
 
 	vall_reduce(world, &instance.n, &instance.total_n, 1);
 
@@ -116,17 +118,7 @@ int main(int argc, char *argv[]) {
 		lf = new QuadraticLossCD<unsigned int, double>();
 		break;
 
-		//#ifdef MATLAB
-		//
-		//		case 4:
-		//		lf = new QuadraticLossLbfgs<unsigned int, double>();
-		//		break;
-		//		case 5:
-		//		lf = new LogisticLossMatlab<unsigned int, double>();
-		//		break;
-		//
-		//#endif
-
+	
 	default:
 		break;
 	}
@@ -146,15 +138,13 @@ int main(int argc, char *argv[]) {
 		logFile.open(ss.str().c_str());
 	}
 
-	if (distributedSettings.iters_bulkIterations_count < 1) {
-		distributedSettings.iters_bulkIterations_count = 1;
-	}
+	distributedSettings.iters_bulkIterations_count = 1;
 
-	distributedSettings.iters_communicate_count =
-			distributedSettings.iters_communicate_count
-			/ distributedSettings.iters_bulkIterations_count;
+	// distributedSettings.iters_communicate_count =
+	// 		distributedSettings.iters_communicate_count
+	// 		/ distributedSettings.iters_bulkIterations_count;
 
-	cout << "BULK "<<distributedSettings.iters_bulkIterations_count<<" "<< distributedSettings.iters_communicate_count<<endl;
+//	cout << "BULK "<<distributedSettings.iters_bulkIterations_count<<" "<< distributedSettings.iters_communicate_count<<endl;
 
 
 //	cout<< instance.A_csr_row_ptr[instance.A_csr_row_ptr.size()-1] <<endl;
@@ -195,12 +185,12 @@ int main(int argc, char *argv[]) {
 	case 6:
 		lf->subproblem_solver_FISTA(instance, deltaAlpha, w, wBuffer, deltaW,
 									distributedSettings, world, gamma, ctx, logFile);
-
 		break;
     case 7:
          lf->subproblem_solver_SDCA_without_duality(instance, deltaAlpha, w, wBuffer, deltaW,
                   distributedSettings, world, gamma, ctx, logFile);
-    break;
+    	break;
+	
 	default:
 		break;
 	}

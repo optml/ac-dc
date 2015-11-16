@@ -111,20 +111,21 @@ public:
 	}
 
 	virtual void backtrack_linesearch(ProblemData<L, D> &instance,
-	                                  std::vector<D> &deltaAlpha, std::vector<D> &search_direction, std::vector<D> &w, D &dualobj,
-	                                  D &a) {
+	                                  std::vector<D> &deltaAlpha, std::vector<D> &search_direction, std::vector<D> &w, 
+	                                  D &dualobj, D &a) {
 
 		D rho = 0.8;
-		D c1ls = 0.1;
+		D c1ls = 0.2;
 		//a = 10000.0;
 		int iter = 0;
 		std::vector<D> potent(instance.n);
 
 		while (1) {
 
-			if (iter > 100) {
-				//cout<<a<<"    ";
+			if (iter > 50) {
+				//cout<<a<<endl;
 				//a = 1.0;
+				//cblas_dcopy(instance.n, &potent[0], 1, &deltaAlpha[0], 1);
 				break;
 			}
 
@@ -132,7 +133,7 @@ public:
 				potent[i] = deltaAlpha[i] - a * search_direction[i];
 			}
 
-			D obj = 0.0;
+			D obj;
 
 			this->compute_subproproblem_obj(instance, potent, w, obj);
 
@@ -142,7 +143,7 @@ public:
 			if (obj <= dualobj - c1ls * a * gg * gg) {
 				//cout<<a<<"    "<<obj<<"  "<<dualobj - c1ls * a * gg * gg<<"    "<<a<<endl;
 				cblas_dcopy(instance.n, &potent[0], 1, &deltaAlpha[0], 1);
-				cout << a << "  " << iter << endl;
+				//cout << a << "  " << iter << endl;
 				dualobj = obj;
 				break;
 			}
@@ -170,7 +171,7 @@ public:
 
 			startPoint = instance.n * flag_old;
 			for (L i = 0; i < instance.n; i++)
-				rk[startPoint] = gradient[i] - old_grad[i];
+				rk[startPoint + i] = gradient[i] - old_grad[i];
 			// for (int i=0; i<10; i++)
 			// 	cout<<rk[instance.n * i + 11] <<"  ";
 			// cout<<flag_old<<endl;
@@ -184,23 +185,30 @@ public:
 				kai = 0;
 				wan = flag_BFGS - 1;
 			}
-
+			//double n1, n2;
 			D bb = 0.0;
 			for (L i = kai; i <= wan; i++) {
 				L ii = wan - (i - kai);
 				if (ii >= limit_BFGS)
 					ii = ii - limit_BFGS;
 				aa[ii] = oneoversy[ii] * cblas_ddot(instance.n, &sk[instance.n * ii], 1, &search_direction[0], 1);
+				//n1 = cblas_dnrm2(instance.n, &search_direction[0], 1);
 				cblas_daxpy(instance.n, -aa[ii], &rk[instance.n * ii], 1, &search_direction[0], 1);
+				//n2 = cblas_dnrm2(instance.n, &search_direction[0], 1);	
 			}
 
 			D Hk_zero = 0.0;
-			D t1 = cblas_ddot(instance.n, &sk[startPoint], 1, &rk[startPoint], 1);
-			D t2 = cblas_ddot(instance.n, &rk[startPoint], 1, &rk[startPoint], 1);
-			Hk_zero = t1 / t2;
-			//cout<< Hk_zero << "   "<<t2<<endl;
-			cblas_dscal(instance.n, Hk_zero, &search_direction[0], 1);
+			//D t1 = cblas_ddot(instance.n, &sk[startPoint], 1, &rk[startPoint], 1);
+			D t2 = cblas_dnrm2(instance.n, &rk[startPoint], 1);
+			Hk_zero = 1.0 / oneoversy[flag_old] / t2 / t2;
+			if (Hk_zero >1000.0)
+				Hk_zero = 1000.0;
+			else if (Hk_zero < 0.001)
+				Hk_zero = 0.001;
+			//cout<<oneoversy[0] << "   "<<t2<<endl;
 
+			cblas_dscal(instance.n, Hk_zero, &search_direction[0], 1);
+			//double n3 = cblas_dnrm2(instance.n, &search_direction[0], 1);   
 			for (L i = kai; i <= wan; i++) {
 				L ii = i;
 				if (i >= limit_BFGS)
@@ -208,10 +216,11 @@ public:
 
 				bb = oneoversy[ii] * cblas_ddot(instance.n, &rk[instance.n * ii], 1, &search_direction[0], 1);
 				cblas_daxpy(instance.n, (aa[ii] - bb), &sk[instance.n * ii], 1, &search_direction[0], 1);
-
 			}
-			cblas_dscal(instance.n, Hk_zero, &search_direction[0], 1);
-
+			//double n4 = cblas_dnrm2(instance.n, &search_direction[0], 1);   
+			//cout<<oneoversy[flag_old]<<"  "<<sk[startPoint+11]<<"  "<< rk[startPoint+11]<<"  "<< gradient[11]<<"  "<< old_grad[11]<<endl;
+			//cout<<n1<<"  "<<n2<<"  "<<n3<<"  "<<n4<<"  "<<aa[0]<<"  "<<bb<<"       "<<Hk_zero<<endl;
+			//cout<<sk[1]<<"   "<<sk[2]<<endl;
 		}
 		// for (L i = 0; i < instance.n; i++){
 
