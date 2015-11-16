@@ -236,7 +236,7 @@ public:
 				dualobj = 0;
 				cblas_set_to_zero(deltaW);
 				cblas_set_to_zero(deltaAlpha);
-				for (unsigned int it = 0; it < 5; it++) {
+				for (unsigned int it = 0; it < distributedSettings.iterationsPerThread; it++) {
 
 					this->compute_subproproblem_gradient(instance, gradient, deltaAlpha, w);
 					this->backtrack_linesearch(instance, deltaAlpha, gradient, w, dualobj, a);
@@ -308,7 +308,7 @@ public:
 				this->compute_subproproblem_obj(instance, deltaAlpha, w, dualobj);
 				stepsize = 1.0 * instance.n;
 
-				for (L iter_counter = 0; iter_counter < 5; iter_counter++) {
+				for (L iter_counter = 0; iter_counter < distributedSettings.iterationsPerThread; iter_counter++) {
 
 					this->compute_subproproblem_gradient(instance, gradient, deltaAlpha, w);
 					this->LBFGS_update(instance, search_direction, old_grad, sk, rk, gradient, oneoversy, iter_counter,
@@ -389,7 +389,7 @@ public:
 				for (unsigned int idx = 0; idx < instance.n; idx++)
 					cg_p[idx] = -cg_r[idx];
 
-				for (unsigned int it = 0; it < 1; it++) { //control it upper bound
+				for (unsigned int it = 0; it < distributedSettings.iterationsPerThread; it++) { //control it upper bound
 
 					D denom = 0.0;
 					D nomer = 0.0;
@@ -556,7 +556,7 @@ public:
 				cblas_dcopy(instance.n, &deltaAlpha[0], 1, &sk[0], 1);
 				cblas_dcopy(instance.n, &gradient[0], 1, &gradient_old[0], 1);
 
-				for (int iter = 0; iter < 10; iter++) {
+				for (int iter = 0; iter < distributedSettings.iterationsPerThread; iter++) {
 
 					this->compute_subproproblem_gradient(instance, gradient, deltaAlpha, w);
 
@@ -634,7 +634,7 @@ public:
 			cblas_set_to_zero(deltaW);
 			cblas_set_to_zero(deltaAlpha);
 			cblas_set_to_zero(y);
-			for (unsigned int kk = 0; kk < distributedSettings.iters_bulkIterations_count * 1; kk++) {
+			for (unsigned int kk = 0; kk < distributedSettings.iterationsPerThread ; kk++) {
 
 				this->compute_subproproblem_gradient(instance, gradient, deltaAlpha, w);
 
