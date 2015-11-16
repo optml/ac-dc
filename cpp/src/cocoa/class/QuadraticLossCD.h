@@ -233,7 +233,7 @@ public:
 			start = gettime_();
 			for (int jj = 0; jj < distributedSettings.iters_bulkIterations_count; jj++) {
 
-				a = 1.0 * instance.n;
+				a = 0.5 * instance.n;
 				dualobj = 0;
 				cblas_set_to_zero(deltaW);
 				cblas_set_to_zero(deltaAlpha);
