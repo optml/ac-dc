@@ -115,7 +115,7 @@ public:
 	                                  D &dualobj, D &a) {
 
 		D rho = 0.8;
-		D c1ls = 0.2;
+		D c1ls = 0.5;
 		//a = 10000.0;
 		int iter = 0;
 		std::vector<D> potent(instance.n);
@@ -143,7 +143,7 @@ public:
 			if (obj <= dualobj - c1ls * a * gg * gg) {
 				//cout<<a<<"    "<<obj<<"  "<<dualobj - c1ls * a * gg * gg<<"    "<<a<<endl;
 				cblas_dcopy(instance.n, &potent[0], 1, &deltaAlpha[0], 1);
-				//cout << a << "  " << iter << endl;
+				// cout << a << "  " << iter << endl;
 				dualobj = obj;
 				break;
 			}
@@ -176,7 +176,7 @@ public:
 			// 	cout<<rk[instance.n * i + 11] <<"  ";
 			// cout<<flag_old<<endl;
 			oneoversy[flag_old] = 1.0 / cblas_ddot(instance.n, &rk[startPoint], 1, &sk[startPoint], 1);
-
+cout<<oneoversy[flag_old]<<endl;
 			std::vector<D> aa(limit_BFGS);
 
 			int kai = flag_BFGS;

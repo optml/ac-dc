@@ -306,7 +306,7 @@ public:
 				cblas_set_to_zero(deltaW);
 				cblas_set_to_zero(deltaAlpha);
 				this->compute_subproproblem_obj(instance, deltaAlpha, w, dualobj);
-				stepsize = 1.0 * instance.n;
+				stepsize = 0.05 * instance.n;
 
 				for (L iter_counter = 0; iter_counter < distributedSettings.iterationsPerThread; iter_counter++) {
 
@@ -567,7 +567,7 @@ public:
 					double nom = cblas_ddot(instance.n, &sk[0], 1, &sk[0], 1);
 					double stepsize;
 					if (denom < 1e-50)
-						stepsize = 1e-10;
+						stepsize = 1e-40;
 					else
 						stepsize = 1.0 * nom / denom;
 					//cout<<stepsize<< "  "<<denom<<endl;
@@ -640,7 +640,7 @@ public:
 
 				t1 = 0.5 * (1.0 + sqrt(1.0 + t0 * t0 * 4.0));
 				double tmpFrac = (t0 - 1) / t1;
-				Lip = 1.0 / instance.n;
+				Lip = 4.0 / instance.n;
 				int iter = 0;
 				while (1) {
 					Lip = Lip * eta;
@@ -664,7 +664,7 @@ public:
 
 					if (obj < obj_appro || iter > 20) {
 						cblas_dcopy(instance.n, &potential[0], 1, &deltaAlpha[0], 1);
-						cout << obj << "   " << obj_appro << "   Lip constant estimate " << Lip << "   " << iter << endl;
+						//cout << obj << "   " << obj_appro << "   Lip constant estimate " << Lip << "   " << iter << endl;
 						break;
 					}
 					iter++;
