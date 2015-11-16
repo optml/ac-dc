@@ -227,12 +227,13 @@ public:
 
 		double dualobj;
 		std::vector < D > gradient(instance.n);
-		double a = 2.0 * instance.n;
+		double a;
 
 		for (unsigned int t = 0; t < distributedSettings.iters_communicate_count; t++) {
 			start = gettime_();
 			for (int jj = 0; jj < distributedSettings.iters_bulkIterations_count; jj++) {
 
+				a = 1.0 * instance.n;
 				dualobj = 0;
 				cblas_set_to_zero(deltaW);
 				cblas_set_to_zero(deltaAlpha);
