@@ -92,6 +92,12 @@ public:
 			D &stepsize){
 
 	}
+	virtual void wolfe_linesearch(ProblemData<L, D> &instance, std::vector<D> &deltaAlpha, 
+			std::vector<D> &search_direction, std::vector<D> &gradient_temp1,
+			std::vector<D> &AdeltaAlpha, std::vector<D> &Ad, std::vector<D> &AAdeltaAlpha, std::vector<D> &AAd, 
+ 			std::vector<D> &w, D &dualobj, D &a){
+
+	}
 
 	virtual void compute_subproproblem_obj(ProblemData<L, D> &instance,
 			std::vector<D> &deltaAlpha, std::vector<D> &search_direction, std::vector<D> &w, D dualobj){

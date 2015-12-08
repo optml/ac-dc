@@ -74,9 +74,6 @@ int main(int argc, char *argv[]) {
 	std::vector<double> w(instance.m);
 
 	instance.x.resize(instance.n);
-	cblas_set_to_zero(instance.x);
-	cblas_set_to_zero(w);
-	cblas_set_to_zero(deltaW);
 
 	// compute local w
 	vall_reduce(world, deltaW, w);
@@ -87,10 +84,19 @@ int main(int argc, char *argv[]) {
 
 	instance.oneOverLambdaN = 1 / (0.0 + instance.total_n * instance.lambda);
 
+	int sigmaSet[] = {1,2,3,4,5,6,7,8,9,10,12,14,16,24,32,64};
+	for (int idE = 0; idE < 16; idE++){
+
+	cblas_set_to_zero(instance.x);
+	cblas_set_to_zero(w);
+	cblas_set_to_zero(deltaAlpha);
+	cblas_set_to_zero(wBuffer);
+	cblas_set_to_zero(deltaW);
+
 	double gamma;
 	if (distributedSettings.APPROX) {
 		gamma = 1;
-		instance.penalty = world.size() + 0.0;
+		instance.penalty = sigmaSet[idE] + 0.0;
 	} else {
 		gamma = 1 / (world.size() + 0.0);
 		instance.penalty = 1;
@@ -134,14 +140,13 @@ int main(int argc, char *argv[]) {
 	// 		<< distributedSettings.iterationsPerThread << "_"
 	// 		<< instance.experimentName << "_" << distributedSettings.APPROX
 	// 		<< "_" << instance.theta << "_.log";	
-	
 	ss << ctx.matrixAFile << "_" 
 			<< distributedSettings.lossFunction << "_"
 			<< localsolver << "_"
 			<< distributedSettings.iters_communicate_count << "_"
 			<< distributedSettings.iterationsPerThread << "_"
 			<< instance.lambda << "_"
-			<< distributedSettings.APPROX
+			<< distributedSettings.APPROX << "_" << sigmaSet[idE]
 			<< ".log";
 	std::ofstream logFile;
 	if (ctx.settings.verbose) {
@@ -209,7 +214,7 @@ int main(int argc, char *argv[]) {
 	if (ctx.settings.verbose) {
 		logFile.close();
 	}
-
+	}
 	MPI::Finalize();
 
 	return 0;
